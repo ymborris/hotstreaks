@@ -263,7 +263,58 @@ input[type="range"] { width: 100%; accent-color: var(--hot); }
   padding: 14px 14px 10px;
   align-items: center;
 }
-.crest {
+  .sports { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 10px; }
+  .sports button {
+    border: 1px solid var(--line); background: var(--bg-elev); color: var(--muted);
+    border-radius: 999px; padding: 7px 13px; font-size: 12.5px; font-weight: 600;
+  }
+  .sports button.active { color: #fff; border-color: var(--hot); background: rgba(255,106,26,.14); }
+  .sports button.soon { opacity: .55; }
+  .sports button[disabled] { opacity: .42; cursor: not-allowed; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 16px; }
+  .tabs button {
+    border: 1px solid var(--line); background: var(--bg-elev); color: var(--muted);
+    border-radius: 10px; padding: 8px 13px; font-size: 13px; font-weight: 600;
+  }
+  .tabs button.active { color: #fff; background: var(--bg-elev-2); border-color: #4a5364; }
+  .panel { display: none; }
+  .panel.on { display: block; }
+  body.no-side .sidebar { display: none; }
+  body.no-side .app { grid-template-columns: 1fr; }
+  .kickoff { max-width: 190px; }
+  .note {
+    border-left: 3px solid var(--today); background: rgba(255, 209, 102, 0.06);
+    padding: 10px 13px; border-radius: 8px; color: var(--muted); font-size: 12.5px;
+    line-height: 1.55; margin: 0 0 14px;
+  }
+  .note b { color: var(--text); }
+  .row-list { display: flex; flex-direction: column; gap: 8px; }
+  .rrow {
+    display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px;
+    align-items: center; border: 1px solid var(--line); background: var(--bg-elev);
+    border-radius: 12px; padding: 10px 13px;
+  }
+  .rrow .rk { font-family: var(--mono); font-weight: 700; font-size: 15px; color: var(--hot); }
+  .rrow h5 { margin: 0; font-size: 14px; }
+  .rrow .meta { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .rrow .meta b { color: var(--spicy); font-family: var(--mono); }
+  .rrow .right { text-align: right; font-family: var(--mono); }
+  .rrow .right .big { font-size: 16px; font-weight: 700; color: var(--good); }
+  .rrow .right .small { font-size: 11px; color: var(--muted); }
+  .ticket { border: 1px solid var(--line); background: var(--bg-elev); border-radius: 14px; padding: 15px; margin-bottom: 16px; }
+  .ticket h4 { margin: 0 0 3px; font-size: 15.5px; }
+  .ticket .sub { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
+  .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(148px, 1fr)); gap: 8px; margin: 12px 0; }
+  .kv div { background: var(--bg-elev-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; }
+  .kv b { display: block; font-family: var(--mono); font-size: 15px; margin-bottom: 2px; }
+  .kv span { font-size: 11px; color: var(--muted); }
+  .legtable { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .legtable th, .legtable td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .legtable th { color: var(--dim); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em; }
+  .legtable td.odds { font-family: var(--mono); color: var(--good); }
+  .legtable td.be { font-family: var(--mono); color: var(--muted); }
+  .legtable tr:last-child td { border-bottom: none; }
+  .crest {
   width: 44px;
   height: 44px;
   border-radius: 12px;
@@ -532,9 +583,19 @@ tr:hover td { background: #171b24; }
         </div>
         <div class="controls">
           <button class="mobile-filters" id="openFilters">Filters</button>
+          <select class="select kickoff" id="kickoff" title="Show only runs whose next match kicks off in this window">
+            <option value="0">Any kickoff time</option>
+            <option value="1">Next 1 hour</option>
+            <option value="3">Next 3 hours</option>
+            <option value="6">Next 6 hours</option>
+            <option value="12">Next 12 hours</option>
+            <option value="24">Next 24 hours</option>
+            <option value="72">Next 3 days</option>
+            <option value="168">Next 7 days</option>
+            <option value="720">Next 30 days</option>
+          </select>
           <div class="seg" id="sortSeg">
             <button data-sort="length" class="active">Longest</button>
-            <button data-sort="soon">Kickoff</button>
             <button data-sort="team">Team</button>
           </div>
           <div class="seg" id="viewSeg">
@@ -543,6 +604,24 @@ tr:hover td { background: #171b24; }
           </div>
         </div>
       </div>
+      <nav class="sports" id="sports">
+        <button data-sport="football" class="active">⚽ Football</button>
+        <button data-sport="basketball">🏀 Basketball</button>
+        <button data-sport="tennis">🎾 Tennis</button>
+        <button data-sport="tabletennis">🏓 Table tennis</button>
+        <button data-sport="icehockey">🏒 Ice hockey</button>
+        <button data-sport="baseball">⚾ Baseball</button>
+        <button data-sport="amfootball">🏈 Am. football</button>
+      </nav>
+
+      <nav class="tabs" id="tabs">
+        <button data-tab="streaks" class="active">Streaks</button>
+        <button data-tab="rank">Power rankings</button>
+        <button data-tab="high">High odds</button>
+        <button data-tab="acca">Accumulators</button>
+      </nav>
+
+      <section class="panel on" id="panel-streaks">
       <div class="grid" id="cards"></div>
       <div class="table-wrap hidden" id="tableWrap">
         <table>
@@ -562,6 +641,36 @@ tr:hover td { background: #171b24; }
       </div>
       <div class="empty hidden" id="empty">No streaks match those filters. Drop the minimum length or clear a chip.</div>
       <button class="more hidden" id="more">Show more runs</button>
+    </section>
+
+      <section class="panel" id="panel-rank">
+        <div class="note">
+          Runs most likely to continue, weighted towards the strongest competitions.
+          <b>Confidence</b> is the modelled chance the run survives the next match;
+          <b>break-even</b> is the minimum price worth taking (1 ÷ probability).
+        </div>
+        <div class="row-list" id="rankList"></div>
+      </section>
+
+      <section class="panel" id="panel-high">
+        <div class="note">
+          Long-running selections the market should price generously. Higher odds mean
+          lower probability — treat these as value, not bankers.
+        </div>
+        <div class="row-list" id="highList"></div>
+      </section>
+
+      <section class="panel" id="panel-acca">
+        <div class="note">
+          Three independent 16-leg tickets built from the streak model, one leg per match so the
+          legs stay independent. Every leg is priced at least 1.50.
+          <b>Only place a leg if SportyBet's price is at or above its break-even</b> — that is what
+          keeps the ticket value-positive. The Flexi figures are arithmetic on the modelled prices,
+          not SportyBet's internal split, so check their calculator before staking.
+        </div>
+        <div id="accaList"></div>
+      </section>
+
     </main>
   </div>
     <script>
@@ -577,6 +686,9 @@ const state = {
   when: "all",
   sort: "length",
   view: "cards",
+  window: 0,          // kickoff window in hours (0 = any)
+  tab: "streaks",
+  sport: "football",
   limit: PAGE,
 };
 
@@ -661,6 +773,11 @@ function filtered() {
     if (state.when === "today" && !(nxt && nxt.today)) return false;
     if (state.when === "home" && !(nxt && nxt.home)) return false;
     if (state.when === "away" && !(nxt && nxt.home === false)) return false;
+    if (state.window > 0) {
+      if (!nxt || typeof nxt.ts !== "number") return false;
+      const hrs = (nxt.ts * 1000 - Date.now()) / 3600000;
+      if (hrs < -0.5 || hrs > state.window) return false;
+    }
     if (q) {
       const blob = `${s.team} ${pretty(s.team)} ${s.league} ${s.typeLabel} ${s.market || ""} ${nxt ? nxt.headline : ""} ${nxt ? pretty(nxt.opponent) : ""} ${nxt ? pretty(nxt.homeTeam) : ""} ${nxt ? pretty(nxt.awayTeam) : ""}`.toLowerCase();
       if (!blob.includes(q)) return false;
@@ -669,10 +786,8 @@ function filtered() {
   });
   rows.sort((a, b) => {
     if (state.sort === "team") return a.team.localeCompare(b.team) || b.length - a.length;
-    if (state.sort === "soon") {
-      const da = a.next?.date || "9999";
-      const db = b.next?.date || "9999";
-      return da.localeCompare(db) || b.length - a.length;
+    if (state.window > 0) {                       // soonest kickoff first inside a window
+      return (a.next?.ts || 9e15) - (b.next?.ts || 9e15) || b.length - a.length;
     }
     return b.length - a.length || a.team.localeCompare(b.team);
   });
@@ -836,6 +951,36 @@ function bind() {
     $("minVal").textContent = state.minLen;
     resetLimitAndRender();
   });
+  $("kickoff").addEventListener("change", (e) => {
+    state.window = Number(e.target.value);
+    resetLimitAndRender();
+  });
+  $("sports").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    selectSport(b.dataset.sport);
+  });
+  $("tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("button");
+    if (!b) return;
+    state.tab = b.dataset.tab;
+    [...$("tabs").children].forEach((x) => x.classList.toggle("active", x === b));
+    document.body.classList.toggle("no-side", state.tab !== "streaks");
+    ["streaks", "rank", "high", "acca"].forEach((t) => {
+      $("panel-" + t).classList.toggle("on", t === state.tab);
+    });
+    $("sortSeg").classList.toggle("hidden", state.tab !== "streaks");
+    $("viewSeg").classList.toggle("hidden", state.tab !== "streaks");
+    $("kickoff").classList.toggle("hidden", state.tab !== "streaks");
+    if (state.tab !== "streaks") {
+      const a = state.data?.analysis || {};
+      if (state.tab === "rank") renderRankings(a.powerRankings || []);
+      if (state.tab === "high") renderHighOdds(a.highOdds || []);
+      if (state.tab === "acca") renderAccas(a.accumulators || [], a);
+    } else {
+      render();
+    }
+  });
   $("sortSeg").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
@@ -871,6 +1016,170 @@ function bind() {
   });
 }
 
+function kickoffText(ts) {
+  if (!ts) return "—";
+  const d = new Date(ts * 1000);
+  const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  return `${days[d.getDay()]} ${d.getDate()} ${d.toLocaleString("en-GB",{month:"short"})} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+
+function selRow(r, rank) {
+  return `<article class="rrow">
+    ${rank === null ? "" : `<div class="rk">${rank}</div>`}
+    <div>
+      <h5>${esc(r.team)} <span class="market-tag">${esc(r.market || "")}</span></h5>
+      <div class="meta">${esc(r.typeLabel)} · run of <b>${r.run}</b> · ${esc(r.league)}
+        · ${esc(r.headline || "")} ${r.date ? "· " + esc(kickoffText(r.ts)) : ""}</div>
+    </div>
+    <div class="right">
+      <div class="big">${r.confidence}%</div>
+      <div class="small">odds ${r.estOdds} · break-even ${r.fairOdds}<br>${esc(r.record || "")} hit</div>
+    </div>
+  </article>`;
+}
+
+function renderRankings(rows) {
+  $("rankList").innerHTML = rows.length
+    ? rows.map((r) => selRow(r, r.rank)).join("")
+    : `<div class="note">No rankings yet — they are rebuilt on the next data update.</div>`;
+}
+
+function renderHighOdds(rows) {
+  $("highList").innerHTML = rows.length
+    ? rows.map((r) => selRow(r, null)).join("")
+    : `<div class="note">No long-priced selections right now.</div>`;
+}
+
+function renderAccas(tickets, analysis) {
+  if (!tickets.length) {
+    $("accaList").innerHTML = `<div class="note">No tickets could be built from the current run set.</div>`;
+    return;
+  }
+  $("accaList").innerHTML = tickets.map((t) => {
+    const f = t.flexi || {}, o = t.outcomes || {};
+    const legs = t.legs.map((l, i) => `<tr>
+        <td>${i + 1}</td>
+        <td>${esc(l.kickoff)}</td>
+        <td>${esc(l.headline)}<div style="color:var(--muted);font-size:11px">${esc(l.league)}</div></td>
+        <td>${esc(l.typeLabel)}<div style="color:var(--muted);font-size:11px">run of ${l.run} · ${esc(l.form || "")}</div></td>
+        <td>${l.confidence}%</td>
+        <td class="odds">${l.odds}</td>
+        <td class="be">${l.fairOdds}</td>
+      </tr>`).join("");
+    return `<section class="ticket">
+      <h4>${esc(t.name)}</h4>
+      <div class="sub">${f.legs} legs · ${(t.leagues || []).length} competitions · generated ${esc(analysis.generatedAt || "")}</div>
+      <div class="kv">
+        <div><b>${f.totalOdds}</b><span>total odds (all 16)</span></div>
+        <div><b>${o.anyReturnPct}%</b><span>chance of a Flexi return at max ${5} losses</span></div>
+        <div><b>${o.expectedLosses}</b><span>expected losing legs</span></div>
+        <div><b>${o.breakEvenAvgOdds}</b><span>break-even avg odds per leg</span></div>
+        <div><b>${f.minLegOdds}–${f.maxLegOdds || f.minLegOdds}</b><span>leg odds range</span></div>
+      </div>
+      <table class="legtable">
+        <thead><tr><th>#</th><th>Kickoff</th><th>Match</th><th>Selection</th><th>Conf.</th><th>Odds</th><th>Break-even</th></tr></thead>
+        <tbody>${legs}</tbody>
+      </table>
+    </section>`;
+  }).join("");
+}
+
+let footballData = null;
+let sportsPayload = null;
+
+const SPORT_META = {
+  basketball: { name: "Basketball", note: "NBA" },
+  tennis: { name: "Tennis", note: "ATP Tour" },
+  tabletennis: { name: "Table tennis", note: "WTT" },
+  icehockey: { name: "Ice hockey", note: "NHL" },
+  baseball: { name: "Baseball", note: "MLB" },
+  amfootball: { name: "American football", note: "NFL" },
+};
+
+async function ensureSports() {
+  if (sportsPayload) return sportsPayload;
+  const res = await fetch(`./data/sports.json?t=${Date.now()}`, { cache: "no-store" });
+  if (!res.ok) throw new Error("no sports data");
+  sportsPayload = await res.json();
+  return sportsPayload;
+}
+
+function fillLeagues(list) {
+  const sel = $("league");
+  sel.innerHTML = '<option value="">All competitions</option>';
+  for (const lg of list || []) {
+    const o = document.createElement("option");
+    o.value = lg;
+    o.textContent = lg;
+    sel.appendChild(o);
+  }
+}
+
+function showSportMessage(text) {
+  $("cards").innerHTML = `<div class="note" style="grid-column:1/-1">${esc(text)}</div>`;
+  $("tableWrap").classList.add("hidden");
+  $("cards").classList.remove("hidden");
+  $("statAll").textContent = "0";
+  $("statToday").textContent = "0";
+}
+
+async function selectSport(key) {
+  state.sport = key;
+  [...$("sports").children].forEach((b) => b.classList.toggle("active", b.dataset.sport === key));
+  const isFootball = key === "football";
+  // the analysis views are built from the football model only
+  [...$("tabs").children].forEach((b) => {
+    b.classList.toggle("hidden", !isFootball && b.dataset.tab !== "streaks");
+    if (!isFootball) b.classList.remove("active");
+  });
+  if (!isFootball) {
+    state.tab = "streaks";
+    [...$("tabs").children][0].classList.add("active");
+    ["streaks", "rank", "high", "acca"].forEach((t) => $("panel-" + t).classList.toggle("on", t === "streaks"));
+  }
+
+  state.types = new Set();
+  state.market = "all";
+  state.polarity = "all";
+  state.league = "";
+  state.limit = PAGE;
+
+  if (isFootball) {
+    state.data = footballData;
+    $("subtitle").textContent = `${footballData.streakCount} runs · ${footballData.teamCount} teams · ${footballData.eventCount} matches · as of ${footballData.asOf} · kickoffs WAT`;
+    fillLeagues(footballData.leagues);
+    renderChips();
+    render();
+    return;
+  }
+
+  let payload;
+  try {
+    payload = await ensureSports();
+  } catch (err) {
+    showSportMessage("data/sports.json is not available yet — it is written by the same nightly workflow.");
+    return;
+  }
+  const sec = (payload.sports || {})[key];
+  if (!sec) { showSportMessage("No data for this sport."); return; }
+  if (!sec.available || !(sec.streaks || []).length) {
+    showSportMessage(`${SPORT_META[key]?.name || key}: ${sec.reason || "no data yet"} — the pipeline retries on every run.`);
+    $("subtitle").textContent = `${SPORT_META[key]?.name || key} · awaiting data`;
+    fillLeagues([]);
+    return;
+  }
+  state.data = {
+    streakCount: sec.streakCount, teamCount: sec.teamCount, eventCount: sec.eventCount,
+    asOf: sec.asOf, leagues: sec.leagues || [], types: sec.types || [],
+    markets: sec.markets || [], streaks: sec.streaks,
+  };
+  $("subtitle").textContent =
+    `${SPORT_META[key]?.name || key} (${SPORT_META[key]?.note || ""}) · ${sec.streakCount} runs · ${sec.teamCount} teams · ${sec.eventCount} games · as of ${sec.asOf} · kickoffs WAT`;
+  fillLeagues(sec.leagues);
+  renderChips();
+  render();
+}
+
 async function loadData() {
   if (window.__STREAKS__ && window.__STREAKS__.streaks) return window.__STREAKS__;
   const res = await fetch(`./data/streaks.json?t=${Date.now()}`, { cache: "no-store" });
@@ -889,16 +1198,23 @@ async function init() {
       : "Could not load data/streaks.json — it is rebuilt nightly by GitHub Actions; check the Actions tab if this persists.";
     return;
   }
+  footballData = state.data;
   $("subtitle").textContent = `${state.data.streakCount} runs · ${state.data.teamCount} teams · ${state.data.eventCount} matches · as of ${state.data.asOf} · kickoffs WAT`;
-  const sel = $("league");
-  for (const lg of state.data.leagues || []) {
-    const opt = document.createElement("option");
-    opt.value = lg;
-    opt.textContent = lg;
-    sel.appendChild(opt);
-  }
+  fillLeagues(state.data.leagues);
   renderChips();
   render();
+  // grey out sports the last build could not reach (e.g. a blocked source)
+  ensureSports().then((p) => {
+    for (const b of $("sports").children) {
+      const sec = (p.sports || {})[b.dataset.sport];
+      if (b.dataset.sport === "football" || !sec) continue;
+      if (!sec.available || !(sec.streaks || []).length) {
+        b.classList.add("soon");
+        b.title = sec.reason || "no data yet";
+        if (!sec.available && !/soon/.test(b.textContent)) b.textContent += " (soon)";
+      }
+    }
+  }).catch(() => {});
 }
 
 init();
