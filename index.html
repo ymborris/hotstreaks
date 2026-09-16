@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Hot Streaks — Football form dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="backdrop" id="backdrop"></div>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="logo">HS</div>
+        <div>
+          <h1>Hot Streaks</h1>
+          <p>Worldwide football form</p>
+        </div>
+      </div>
+      <input class="search" id="search" type="search" placeholder="Search team, opponent, league…" autocomplete="off" />
+
+      <div class="group">
+        <div class="group-label">Market</div>
+        <div class="chips" id="markets"></div>
+      </div>
+      <div class="group">
+        <div class="group-label">Polarity</div>
+        <div class="chips" id="polarity"></div>
+      </div>
+      <div class="group">
+        <div class="group-label">Line / streak type</div>
+        <div class="chips" id="types"></div>
+      </div>
+      <div class="group">
+        <div class="group-label">Competition</div>
+        <select class="select" id="league">
+          <option value="">All competitions</option>
+        </select>
+      </div>
+      <div class="group">
+        <div class="group-label">Minimum length</div>
+        <div class="range-row"><span>Games</span><b id="minVal">3</b></div>
+        <input type="range" id="minLen" min="2" max="15" value="3" />
+      </div>
+      <div class="group">
+        <div class="group-label">Next match</div>
+        <div class="chips" id="when"></div>
+      </div>
+      <div class="stats">
+        <div class="stat"><b id="statAll">0</b><span>Streaks shown</span></div>
+        <div class="stat"><b id="statToday">0</b><span>Play today</span></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h2 id="headline">Active betting runs</h2>
+          <div class="sub" id="subtitle">Loading worldwide results…</div>
+        </div>
+        <div class="controls">
+          <button class="mobile-filters" id="openFilters">Filters</button>
+          <div class="seg" id="sortSeg">
+            <button data-sort="length" class="active">Longest</button>
+            <button data-sort="soon">Kickoff</button>
+            <button data-sort="team">Team</button>
+          </div>
+          <div class="seg" id="viewSeg">
+            <button data-view="cards" class="active">Cards</button>
+            <button data-view="table">Table</button>
+          </div>
+        </div>
+      </div>
+      <div class="grid" id="cards"></div>
+      <div class="table-wrap hidden" id="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Len</th>
+              <th>Team</th>
+              <th>Streak</th>
+              <th>Form</th>
+              <th>Next match</th>
+              <th>When</th>
+              <th>Venue</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty hidden" id="empty">No streaks match those filters. Drop the minimum length or clear a chip.</div>
+      <button class="more hidden" id="more">Show more runs</button>
+    </main>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
