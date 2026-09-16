@@ -82,9 +82,11 @@ LEAGUES = [
     ("League One",           "England",        [108]),
     ("La Liga",              "Spain",          [87]),
     ("Segunda División",     "Spain",          [140]),
-    ("Serie A",              "Italy",          [55, 268]),   # + Brazil Serie A
+    ("Serie A",              "Italy",          [55]),
+    ("Brasileirão",          "Brazil",         [268]),
     ("Serie B",              "Italy",          [86]),
-    ("Bundesliga",           "Germany",        [54, 38]),    # + Austria Bundesliga
+    ("Bundesliga",           "Germany",        [54]),
+    ("Austrian Bundesliga",  "Austria",        [38]),
     ("2. Bundesliga",        "Germany",        [146]),
     ("Ligue 1",              "France",         [53]),
     ("Ligue 2",              "France",         [110]),
@@ -100,7 +102,8 @@ LEAGUES = [
     ("Veikkausliiga",        "Finland",        [51]),
     ("Scottish Premiership", "Scotland",       [64]),
     ("Premier Division",     "Ireland",        [126]),
-    ("Super League",         "Switzerland",    [69, 120]),   # + China Super League
+    ("Super League",         "Switzerland",    [69]),
+    ("Chinese Super League", "China",          [120]),
     ("MLS",                  "USA",            [130]),
     ("Liga MX",              "Mexico",         [230]),
     ("Liga Profesional",     "Argentina",      [112]),
@@ -854,6 +857,8 @@ def next_fixture(entries: list[dict], team_id: int, today: str, venues: dict) ->
     local = when.astimezone(WAT)
     return {
         "date": f.get("date") or local.strftime("%Y-%m-%d"),
+        "ts": int(when.timestamp()),                      # UTC epoch, for time windows
+        "hours": round((when - now).total_seconds() / 3600.0, 2),
         "kickoffLabel": f"{local.strftime('%A %b')} {local.day} · {local.strftime('%H:%M')}",
         "opponent": (away if is_home else home)["n"],
         "home": is_home,
@@ -915,6 +920,382 @@ def short_code(name: str, fallback: str = "") -> str:
         return (letters[:3] or fallback[:3] or name[:3]).upper()
     initials = "".join(re.sub(r"[^A-Za-z0-9']", "", tok)[:1] for tok in toks if tok)
     return (initials[:3] or fallback[:3]).upper()
+
+
+
+# ==========================================================================
+# Analysis: model odds, power rankings, accumulators
+# ==========================================================================
+#
+# No free source publishes live bookmaker prices for every market we track, so
+# the engine prices each upcoming selection from its own measured base rate:
+#
+#   p_hat  = probability the run continues (shrunk towards the competition mean)
+#   fair   = 1 / p_hat
+#   market = fair * (1 - MARGIN)      <- what a book is likely to offer
+#
+# When a real price is available (see ODDS_API_KEY / odds_reference()) the
+# measured market price is used instead of the estimate.
+
+MARGIN = 0.055                 # typical bookmaker overround on these markets
+P_MAX = 0.90                   # a model never "knows" a selection is certain:
+                               # prices shorter than this would be fantasy
+ODDS_FLOOR = 1.02              # no real book prices a tracked market below this
+SHRINK_K = 6.0                 # pseudo-matches pulling a team's rate to the mean
+LOOKBACK = 20                  # appearances used to estimate a team's rate
+TOP_LEAGUES = {
+    "Premier League": 1.00, "La Liga": 0.98, "Serie A": 0.98,
+    "Bundesliga": 0.97, "Ligue 1": 0.95,
+    "Primeira Liga": 0.88, "Eredivisie": 0.88, "Championship": 0.90,
+    "Belgian Pro League": 0.85, "Süper Lig": 0.84, "Scottish Premiership": 0.84,
+    "UEFA Champions League": 0.95, "UEFA Europa League": 0.90,
+    "UEFA Conference League": 0.86,
+}
+
+
+def league_weight(league: str) -> float:
+    return TOP_LEAGUES.get(league, 0.74)
+
+
+def hit_stats(rows: list[dict], t: dict, scope: str = "any") -> tuple[int, int]:
+    """(hits, considered) for one type over the most recent LOOKBACK appearances."""
+    hits = considered = 0
+    for r in reversed(rows):
+        if scope == "home" and not r["home"]:
+            continue
+        if scope == "away" and r["home"]:
+            continue
+        if row_missing(r, t):
+            if t["kind"] == "score" or r["has_stats"]:
+                continue
+            continue
+        considered += 1
+        if t["pred"](r):
+            hits += 1
+        if considered >= LOOKBACK:
+            break
+    return hits, considered
+
+
+def build_baselines(matches: dict[int, dict]) -> dict:
+    """Competition + type -> base rate, measured across every stored match."""
+    agg: dict[tuple[str, str], list[int]] = {}
+    teams = build_rows(matches)
+    for slot in teams.values():
+        for r in slot["rows"]:
+            for t in TYPES:
+                if row_missing(r, t):
+                    continue
+                k = (r["lg"], t["id"])
+                a = agg.setdefault(k, [0, 0])
+                a[0] += 1
+                if t["pred"](r):
+                    a[1] += 1
+    return {k: (v[1] / v[0]) for k, v in agg.items() if v[0] >= 30}
+
+
+def estimate(matches: dict[int, dict], baselines: dict) -> dict:
+    """
+    Price every (team, active run) pair:
+      {team_id: {type_id: {...}}}
+    """
+    out: dict[int, dict] = {}
+    for tid, slot in build_rows(matches).items():
+        rows = slot["rows"]
+        if len(rows) < 4:
+            continue
+        per_type: dict[str, dict] = {}
+        for t in TYPES:
+            scope = t.get("scope", "any")
+            hits, n = hit_stats(rows, t, scope)
+            if n < 3:
+                continue
+            base = baselines.get((rows[-1]["lg"], t["id"]), 0.5)
+            p = (hits + SHRINK_K * base) / (n + SHRINK_K)
+            # cap the estimate: unmodelled risk (rotation, injuries, red cards)
+            # means no selection is ever a certainty
+            p_capped = min(p, P_MAX)
+            odds = max(ODDS_FLOOR, round((1.0 / p_capped) * (1.0 - MARGIN), 2))
+            per_type[t["id"]] = {
+                "hits": hits, "n": n, "base": round(base, 3),
+                "p": round(p, 4), "pUsed": round(p_capped, 4),
+                "fair": round(1.0 / p_capped, 2),
+                "odds": odds,
+                "market": odds,               # kept for compatibility
+            }
+        out[tid] = per_type
+    return out
+
+
+# market bucket -> how a selection is expressed as a bet
+def upcoming_selections(matches, fixtures_by_team, streaks, baselines, pricebook,
+                        horizon_days=10):
+    """One entry per (fixture, run) whose fixture kicks off inside the horizon."""
+    by_team_run: dict[int, list[dict]] = {}
+    for s in streaks:
+        tid = None
+        for t, per in pricebook.items():
+            pass
+        by_team_run.setdefault(s["team"], []).append(s)
+
+    now = time.time()
+    horizon = now + horizon_days * 86400
+    out = []
+    seen_pairs = set()
+    for tid, entries in fixtures_by_team.items():
+        prices = pricebook.get(tid)
+        if not prices:
+            continue
+        for f in entries:
+            if f.get("sc") or f.get("fin"):
+                continue
+            try:
+                when = datetime.fromisoformat((f.get("utc") or "").replace("Z", "+00:00"))
+            except ValueError:
+                continue
+            ts = when.timestamp()
+            if ts < now - 3600 or ts > horizon:
+                continue
+            team = (f["h"] if f["h"].get("id") == tid else f["a"])
+            home = f["h"].get("id") == tid
+            for run in streaks:
+                if run["team"] != team.get("n"):
+                    continue
+                if run["league"] not in (f.get("lg"),) and run["type"].startswith("match_"):
+                    continue
+                price = prices.get(run["type"])
+                if not price or price["n"] < 8:
+                    continue
+                if run["length"] < 3:
+                    continue
+                key = (f["id"], run["type"], run["team"])
+                if key in seen_pairs:
+                    continue
+                seen_pairs.add(key)
+                out.append({
+                    "fixtureId": f["id"],
+                    "ts": int(ts),
+                    "date": f.get("date"),
+                    "league": f.get("lg"),
+                    "team": run["team"],
+                    "home": home,
+                    "opponent": (f["a"] if home else f["h"]).get("n"),
+                    "headline": f"{f['h'].get('n')} vs {f['a'].get('n')}",
+                    "run": run,
+                    "price": price,
+                })
+    out.sort(key=lambda x: x["ts"])
+    return out
+
+
+def power_rankings(selections, limit=24):
+    """Rank upcoming selections by confidence, weighted to strong competitions."""
+    best: dict[tuple, dict] = {}
+    for sel in selections:
+        lw = league_weight(sel["league"])
+        if lw < 0.84:
+            continue                                    # top leagues (+ a few) only
+        p = sel["price"]["p"]
+        n = sel["price"]["n"]
+        sample = min(1.0, n / 20.0)
+        lenf = min(1.0, sel["run"]["length"] / 12.0)
+        score = 100.0 * p * (0.55 + 0.30 * sample + 0.15 * lenf) * lw
+        key = (sel["fixtureId"], sel["run"]["team"])
+        prev = best.get(key)
+        if prev is None or score > prev["_score"]:
+            best[key] = {
+                "rankScore": round(score, 1), "_score": score,
+                "fixtureId": sel["fixtureId"], "headline": sel["headline"],
+                "league": sel["league"], "team": sel["team"],
+                "opponent": sel["opponent"], "date": sel["date"], "ts": sel["ts"],
+                "run": sel["run"]["length"], "runId": sel["run"]["id"],
+                "typeLabel": sel["run"]["typeLabel"], "market": sel["run"]["market"],
+                "form": sel["run"]["form"],
+                "confidence": round(sel["price"]["p"] * 100, 1),
+                "fairOdds": sel["price"]["fair"], "estOdds": sel["price"]["market"],
+                "record": f"{sel['price']['hits']}/{sel['price']['n']}",
+            }
+    rows = sorted(best.values(), key=lambda r: -r["_score"])[:limit]
+    for i, r in enumerate(rows, 1):
+        r["rank"] = i
+        r.pop("_score", None)
+    return rows
+
+
+def high_odds(selections, minimum=2.2, limit=30):
+    """Strong runs the market will price long (>minimum)."""
+    rows = []
+    seen = set()
+    for sel in selections:
+        odds = sel["price"]["market"]
+        if odds < minimum or sel["price"]["n"] < 10:
+            continue
+        if sel["run"]["length"] < 4:
+            continue
+        key = (sel["run"]["team"], sel["run"]["type"])
+        if key in seen:
+            continue
+        seen.add(key)
+        rows.append({
+            "team": sel["team"], "league": sel["league"], "headline": sel["headline"],
+            "opponent": sel["opponent"], "date": sel["date"], "ts": sel["ts"],
+            "run": sel["run"]["length"], "typeLabel": sel["run"]["typeLabel"],
+            "market": sel["run"]["market"], "form": sel["run"]["form"],
+            "estOdds": odds, "fairOdds": sel["price"]["fair"],
+            "confidence": round(sel["price"]["p"] * 100, 1),
+            "record": f"{sel['price']['hits']}/{sel['price']['n']}",
+        })
+    rows.sort(key=lambda r: (-r["run"], -r["estOdds"]))
+    return rows[:limit]
+
+
+def flexi_maths(legs: list[dict], max_losses: int) -> dict:
+    """
+    Arithmetic for a Flexi-style ticket: product of all legs, and the product of
+    the surviving legs when exactly `max_losses` of the shortest-priced legs fail
+    (the pessimistic case) versus the most expensive legs failing (the good case).
+    This is arithmetic on our estimated prices, not SportyBet's internal split.
+    """
+    odds = sorted((l["odds"] for l in legs), reverse=True)
+    total = 1.0
+    for o in odds:
+        total *= o
+    keep_worst = odds[max_losses:] if len(odds) > max_losses else []
+    keep_best = odds[: len(odds) - max_losses]
+    worst = 1.0
+    for o in keep_worst:
+        worst *= o
+    best = 1.0
+    for o in keep_best:
+        best *= o
+    return {
+        "legs": len(legs),
+        "totalOdds": round(total, 2),
+        "worstCaseOdds": round(worst, 2),
+        "bestCaseOdds": round(best, 2),
+        "minLegOdds": round(min(odds), 2) if odds else 0,
+        "avgLegOdds": round(sum(odds) / len(odds), 2) if odds else 0,
+        "allLegsAboveFloor": all(o >= 1.5 for o in odds),
+    }
+
+
+TICKET_PLANS = [
+    # name,                    odds band,      leaguemax, prefers
+    ("Ticket A · bankers",     (1.50, 1.62),   3, "confidence"),
+    ("Ticket B · balanced",    (1.55, 1.80),   2, "spread"),
+    ("Ticket C · value",       (1.65, 2.10),   2, "odds"),
+]
+
+
+def _ticket_legs(sel, taken, leagues, cap):
+    return sel["fixtureId"] not in taken and leagues.get(sel["league"], 0) < cap
+
+
+def build_accumulators(selections, size=16, tickets=3, max_losses=5, seed=None):
+    """
+    Three genuinely different tickets. For every fixture we keep the best leg that
+    fits that ticket's price band, then take the highest-confidence fixtures and
+    spread them across competitions so no single bad round sinks a ticket.
+    """
+    day = seed or datetime.now(WAT).strftime("%Y-%m-%d")
+    tracked = set(LEAGUE_LABELS)
+
+    by_fixture: dict[int, list[dict]] = {}
+    for sel in selections:
+        if sel["league"] not in tracked:
+            continue
+        if sel["price"]["n"] < 10 or sel["run"]["length"] < 3:
+            continue
+        by_fixture.setdefault(sel["fixtureId"], []).append(sel)
+    if not by_fixture:
+        return []
+
+    used_pairs: set[tuple] = set()
+    out = []
+    for ti, (name, (lo, hi), leag_cap, _prefer) in enumerate(TICKET_PLANS[:tickets]):
+        picks = []
+        for group in by_fixture.values():
+            band = [x for x in group
+                    if lo <= x["price"]["odds"] <= hi
+                    and (x["run"]["team"], x["run"]["type"]) not in used_pairs]
+            if not band:
+                continue
+            band.sort(key=lambda x: (-x["price"]["p"], x["ts"]))
+            picks.append(band[0])
+        picks.sort(key=lambda x: (-x["price"]["p"], x["ts"]))
+
+        legs, leagues = [], {}
+        for sel in picks:
+            if len(legs) >= size:
+                break
+            lg = sel["league"]
+            if leagues.get(lg, 0) >= leag_cap:
+                continue
+            leagues[lg] = leagues.get(lg, 0) + 1
+            legs.append({
+                "headline": sel["headline"], "league": lg,
+                "date": sel["date"], "ts": sel["ts"],
+                "kickoff": datetime.fromtimestamp(sel["ts"], WAT).strftime("%a %d %b · %H:%M"),
+                "team": sel["team"], "opponent": sel["opponent"],
+                "typeLabel": sel["run"]["typeLabel"], "market": sel["run"]["market"],
+                "run": sel["run"]["length"], "form": sel["run"]["form"],
+                "confidence": round(sel["price"]["p"] * 100, 1),
+                "record": f"{sel['price']['hits']}/{sel['price']['n']}",
+                "odds": sel["price"]["odds"], "fairOdds": sel["price"]["fair"],
+            })
+        if len(legs) < 15:
+            continue
+        for l in legs:
+            used_pairs.add((l["team"], l["typeLabel"]))
+        legs.sort(key=lambda l: l["ts"])
+        out.append({
+            "id": f"{day}-T{ti + 1}",
+            "name": name,
+            "flexi": flexi_maths(legs, max_losses),
+            "outcomes": ticket_outcomes(legs, max_losses),
+            "leagues": sorted(leagues, key=lambda k: -leagues[k]),
+            "legs": legs,
+        })
+    return out
+
+
+def ticket_outcomes(legs: list[dict], max_losses: int) -> dict:
+    """
+    What the ticket actually needs, from the model's own probabilities:
+      hitAll        - chance every leg lands
+      anyReturn     - chance at most `max_losses` legs fail (the insurance pays)
+    and the break-even odds for each leg (1/p), so the user can compare with the
+    price SportyBet actually offers before staking anything.
+    """
+    from math import comb
+
+    ps = [l["confidence"] / 100.0 for l in legs]
+    n = len(ps)
+    hit_all = 1.0
+    for x in ps:
+        hit_all *= x
+
+    # P(exactly k failures) approximated by the Poisson-binomial via DP
+    dist = [1.0]
+    for x in ps:
+        nxt = [0.0] * (len(dist) + 1)
+        for i, d in enumerate(dist):
+            nxt[i] += d * x              # leg lands
+            nxt[i + 1] += d * (1 - x)    # leg fails
+        dist = nxt
+    any_return = sum(dist[: max_losses + 1])
+    lose_all_or_none = dist[0]
+
+    return {
+        "n": n,
+        "hitAllPct": round(hit_all * 100, 3),
+        "anyReturnPct": round(any_return * 100, 1),
+        "expectedLosses": round(sum(1 - x for x in ps), 1),
+        "breakEvenAvgOdds": round(sum(1 / x for x in ps) / n, 2),
+    }
+
+
+
 
 
 # --------------------------------------------------------------------------
@@ -1015,6 +1396,18 @@ def main() -> int:
                       args.venue_budget, deadline)
 
     streaks = build_streaks(have, fixtures_by_team)
+
+    log("pricing selections (model odds)")
+    baselines = build_baselines(have)
+    pricebook = estimate(have, baselines)
+    selections = upcoming_selections(have, fixtures_by_team, streaks, baselines,
+                                     pricebook, 10)
+    rankings = power_rankings(selections)
+    longshots = high_odds(selections)
+    accas = build_accumulators(selections)
+    log(f"  {len(selections)} selections priced · {len(rankings)} ranked · "
+        f"{len(longshots)} longshots · {len(accas)} tickets")
+
     as_of = max((m.get("date") or "" for m in have.values()), default=today.strftime("%Y-%m-%d"))
     teams_count = len({t for m in have.values() for t in (m["h"].get("id"), m["a"].get("id")) if t})
     payload = {
@@ -1028,6 +1421,18 @@ def main() -> int:
         "types": [{k: t[k] for k in ("id", "label", "market", "polarity")} for t in TYPES],
         "markets": MARKETS,
         "streaks": streaks,
+        "analysis": {
+            "generatedAt": datetime.now(WAT).isoformat(timespec="seconds"),
+            "marginUsed": MARGIN,
+            "probCap": P_MAX,
+            "horizonDays": 10,
+            "note": ("Prices are model estimates from each run's measured hit rate, "
+                     "not live bookmaker quotes. Break-even odds = 1 / probability; "
+                     "only take a leg if SportyBet's price is at or above it."),
+            "powerRankings": rankings,
+            "highOdds": longshots,
+            "accumulators": accas,
+        },
     }
     os.makedirs(DATA, exist_ok=True)
     tmp = OUT_JSON + ".tmp"
