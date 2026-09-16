@@ -1028,6 +1028,9 @@ def estimate(matches: dict[int, dict], baselines: dict) -> dict:
 
 
 # market bucket -> how a selection is expressed as a bet
+TYPE_SCOPE = {t["id"]: t.get("scope", "any") for t in TYPES}
+
+
 def upcoming_selections(matches, fixtures_by_team, streaks, baselines, pricebook,
                         horizon_days=10):
     """One entry per (fixture, run) whose fixture kicks off inside the horizon."""
@@ -1067,6 +1070,13 @@ def upcoming_selections(matches, fixtures_by_team, streaks, baselines, pricebook
                 if not price or price["n"] < 8:
                     continue
                 if run["length"] < 3:
+                    continue
+                # a home-scoped run is about home games: it can only continue if the
+                # next match is at home (same for away), otherwise the price is wrong
+                scope = TYPE_SCOPE.get(run["type"], "any")
+                if scope == "home" and not home:
+                    continue
+                if scope == "away" and home:
                     continue
                 key = (f["id"], run["type"], run["team"])
                 if key in seen_pairs:
@@ -1405,6 +1415,36 @@ def main() -> int:
     rankings = power_rankings(selections)
     longshots = high_odds(selections)
     accas = build_accumulators(selections)
+
+    # Hand the full priced pool to the ticket builder (cross-sport). Only the
+    # next 24 hours matter: every ticket must settle inside one day so the stake
+    # can roll over.
+    now_ts = time.time()
+    pool = []
+    for sel in selections:
+        hours = (sel["ts"] - now_ts) / 3600.0
+        if hours < -0.5 or hours > 26:        # small grace for late kickoffs
+            continue
+        pool.append({
+            "sport": "football", "league": sel["league"], "country": sel["league"],
+            "team": sel["team"], "opponent": sel["opponent"], "home": sel["home"],
+            "headline": sel["headline"], "ts": sel["ts"], "date": sel["date"],
+            "type": sel["run"]["type"], "typeLabel": sel["run"]["typeLabel"],
+            "market": sel["run"]["market"], "polarity": sel["run"]["polarity"],
+            "run": sel["run"]["length"], "form": sel["run"]["form"],
+            "confidence": round(sel["price"]["p"] * 100, 1),
+            "p": sel["price"]["p"], "odds": sel["price"]["odds"],
+            "fairOdds": sel["price"]["fair"],
+            "record": f"{sel['price']['hits']}/{sel['price']['n']}",
+            "fixtureId": sel["fixtureId"],
+        })
+    sel_path = os.path.join(DATA, "selections_football.json")
+    with open(sel_path, "w", encoding="utf-8") as fh:
+        json.dump({"generatedAt": datetime.now(WAT).isoformat(timespec="seconds"),
+                   "sport": "football", "horizonHours": 24,
+                   "count": len(pool), "selections": pool}, fh,
+                  ensure_ascii=False, separators=(",", ":"))
+    log(f"  {len(pool)} football selections inside 24h -> data/selections_football.json")
     log(f"  {len(selections)} selections priced · {len(rankings)} ranked · "
         f"{len(longshots)} longshots · {len(accas)} tickets")
 

@@ -234,20 +234,24 @@ def fetch_nhl_day(day: str) -> list[dict]:
 
 
 ESPN = {
-    "basketball": ("basketball/nba", "NBA", "basketball"),
-    "tennis": ("tennis/atp", "ATP Tour", "tennis"),
-    "tabletennis": ("table-tennis/wtt", "WTT", "tabletennis"),
+    "basketball": ("basketball", "nba", "NBA", "basketball"),
+    "tennis": ("tennis", "atp", "ATP Tour", "tennis"),
 }
 
+WEB = "https://site.web.api.espn.com/apis/site/v2/sports"
+CORE = "https://sports.core.api.espn.com/v2/sports"
+_team_cache: dict[str, str] = {}
 
-def fetch_espn_day(key: str, day: str) -> list[dict]:
-    path, league, sport = ESPN[key]
-    j = http_json(f"https://site.api.espn.com/apis/site/v2/sports/{path}"
-                  f"/scoreboard?dates={day.replace('-', '')}")
+
+def _espn_completed(comp: dict) -> bool:
+    return bool(((comp.get("status") or {}).get("type") or {}).get("completed"))
+
+
+def ESPN_BASKETBALL_ROWS(j: dict) -> list[dict]:
     out = []
     for ev in (j or {}).get("events", []):
         comp = (ev.get("competitions") or [{}])[0]
-        if not ((comp.get("status") or {}).get("type") or {}).get("completed"):
+        if not _espn_completed(comp):
             continue
         home = away = None
         for c in comp.get("competitors", []):
@@ -261,13 +265,197 @@ def fetch_espn_day(key: str, day: str) -> list[dict]:
             hs, as_ = int(home.get("score")), int(away.get("score"))
         except (TypeError, ValueError):
             continue
-        hn = (home.get("team") or {}).get("displayName") or ""
-        an = (away.get("team") or {}).get("displayName") or ""
-        lines = {}
-        notes = (comp.get("status") or {}).get("type", {})
-        out.append(rec(ev.get("id"), sport, league, ev.get("date", ""), hn, an, hs, as_,
-                       {"detail": notes.get("detail", ""),
-                        "sets": [c.get("linescores") for c in comp.get("competitors", [])]}))
+        out.append(rec(ev.get("id"), "basketball", "NBA", ev.get("date", ""),
+                       (home.get("team") or {}).get("displayName", ""),
+                       (away.get("team") or {}).get("displayName", ""), hs, as_,
+                       {"venue": (comp.get("venue") or {}).get("fullName", "")}))
+    return out
+
+
+def ESPN_TENNIS_ROWS(j: dict, day: str) -> list[dict]:
+    """Men's singles matches. A tennis scoreboard event is a whole tournament, so
+    every match carries its own date - keep only the requested day."""
+    out = []
+    for ev in (j or {}).get("events", []):
+        tname = ev.get("name") or "ATP"
+        for g in ev.get("groupings", []):
+            if (g.get("grouping") or {}).get("slug") != "mens-singles":
+                continue
+            for m in g.get("competitions", []):
+                if not _espn_completed(m):
+                    continue
+                d, _ts = wat_date(m.get("date", ""))
+                if d != day:
+                    continue                                   # other day of the same tournament
+                comps = m.get("competitors") or []
+                if len(comps) < 2:
+                    continue
+                comps = sorted(comps, key=lambda c: c.get("order", 9))
+                a, b = comps[0], comps[1]
+                na = ((a.get("athlete") or {}).get("displayName") or "").strip()
+                nb = ((b.get("athlete") or {}).get("displayName") or "").strip()
+                if not na or not nb:
+                    continue
+
+                def sets_of(c):
+                    won = 0
+                    games = 0
+                    for ls in (c.get("linescores") or []):
+                        try:
+                            games += int(float(ls.get("value")))
+                        except (TypeError, ValueError):
+                            pass
+                        if ls.get("winner"):
+                            won += 1
+                    return won, games
+
+                sa, ga = sets_of(a)
+                sb, gb = sets_of(b)
+                if sa == sb:                                   # retired / no result
+                    continue
+                # nominal "home" = the first-listed player, so the shared engine works
+                out.append(rec(m.get("id") or f"{ev.get('id')}-{m.get('uid','')}", "tennis",
+                               tname, m.get("date", ""), na, nb, sa, sb,
+                               {"sa": sa, "sb": sb, "ga": ga, "gb": gb,
+                                "sets_lost": sb if sa > sb else sa,
+                                "games": ga + gb,
+                                "round": (m.get("round") or {}).get("displayName", ""),
+                                "venue": (ev.get("venue") or {}).get("displayName", "")}))
+    return out
+
+
+def fetch_espn_day(key: str, day: str) -> list[dict]:
+    """One scoreboard request per date - the cheapest usable path.
+
+    site.api.espn.com answers 403 from datacentre IPs (sandbox and GitHub runners);
+    site.web.api.espn.com is the same payload on an open host. If it ever closes,
+    basketball falls back to the core API.
+    """
+    path, league, _label, sport = ESPN[key]
+    try:
+        j = http_json(f"{WEB}/{path}/{league}/scoreboard?dates={day.replace('-', '')}")
+    except urllib.error.HTTPError as e:
+        log(f"  {key}: {e.code} from site.web.api - trying core API")
+        if key == "basketball":
+            return fetch_espn_core(key, day)
+        raise RuntimeError(f"scoreboard host refused ({e.code})") from e
+    except Exception as e:
+        log(f"  {key}: {type(e).__name__} from site.web.api - trying core API")
+        if key == "basketball":
+            return fetch_espn_core(key, day)
+        raise
+    if key == "tennis":
+        return ESPN_TENNIS_ROWS(j, day)
+    return ESPN_BASKETBALL_ROWS(j)
+
+
+def core_events(sport_path: str, league: str, day: str, limit: int = 60) -> list[str]:
+    j = http_json(f"{CORE}/{sport_path}/leagues/{league}/events"
+                  f"?dates={day.replace('-', '')}&limit={limit}")
+    return [it.get("$ref", "").split("/events/")[-1].split("?")[0]
+            for it in (j or {}).get("items", []) if it.get("$ref")]
+
+
+def score_of(event_id: str, sport_path: str, league: str, comp_id: str, team_id: str):
+    j = http_json(f"{CORE}/{sport_path}/leagues/{league}/events/{event_id}"
+                  f"/competitions/{comp_id}/competitors/{team_id}/score", tries=2)
+    if not j:
+        return None
+    v = j.get("value", j.get("displayValue"))
+    try:
+        return int(float(v))
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_espn_core(key: str, day: str) -> list[dict]:
+    """Basketball fallback: 1 + 3 requests per game, names come from the event name."""
+    sport_path, league, _label, sport = ESPN[key]
+    out = []
+    for eid in core_events(sport_path, league, day):
+        ev = http_json(f"{CORE}/{sport_path}/leagues/{league}/events/{eid}", tries=2)
+        if not ev:
+            continue
+        comp = (ev.get("competitions") or [{}])[0]
+        if not (((comp.get("status") or ev.get("status") or {}).get("type") or {})
+                .get("completed")):
+            continue
+        name = ev.get("name") or ""
+        if " at " in name:
+            away_name, home_name = name.split(" at ", 1)
+        elif " vs " in name:
+            home_name, away_name = name.split(" vs ", 1)
+        else:
+            continue
+        comp_id = str(comp.get("id") or eid)
+        home = away = None
+        for c in comp.get("competitors", []):
+            if c.get("homeAway") == "home":
+                home = c
+            elif c.get("homeAway") == "away":
+                away = c
+        if not home or not away:
+            continue
+        hs = score_of(eid, sport_path, league, comp_id, home.get("id"))
+        as_ = score_of(eid, sport_path, league, comp_id, away.get("id"))
+        if hs is None or as_ is None:
+            continue
+        out.append(rec(eid, sport, league, ev.get("date", ""), home_name.strip(),
+                       away_name.strip(), hs, as_, {"espn_id": eid}))
+    return out
+
+
+def upcoming_espn(key: str) -> dict[str, list[dict]]:
+    """Upcoming games over the next FIXTURE_DAYS days, from the open host."""
+    path, league, label, _sport = ESPN[key]
+    today = datetime.now(WAT).date()
+    out: dict[str, list[dict]] = {}
+    for i in range(FIXTURE_DAYS):
+        day = (today + timedelta(days=i)).strftime("%Y-%m-%d")
+        try:
+            j = http_json(f"{WEB}/{path}/{league}/scoreboard?dates={day.replace('-', '')}")
+        except Exception:
+            continue
+        if key == "tennis":
+            for ev in (j or {}).get("events", []):
+                tname = ev.get("name") or label
+                for g in ev.get("groupings", []):
+                    for m in g.get("competitions", []):
+                        if _espn_completed(m):
+                            continue
+                        d, _ts = wat_date(m.get("date", ""))
+                        if d != day:
+                            continue
+                        comps = sorted(m.get("competitors") or [],
+                                       key=lambda c: c.get("order", 9))
+                        if len(comps) < 2:
+                            continue
+                        na = ((comps[0].get("athlete") or {}).get("displayName") or "").strip()
+                        nb = ((comps[1].get("athlete") or {}).get("displayName") or "").strip()
+                        for nm in (na, nb):
+                            out.setdefault(nm, []).append({
+                                "home": na, "away": nb, "league": tname,
+                                "iso": m.get("date", ""),
+                                "venue": (ev.get("venue") or {}).get("displayName", "")})
+            continue
+        for ev in (j or {}).get("events", []):
+            comp = (ev.get("competitions") or [{}])[0]
+            if _espn_completed(comp):
+                continue
+            home = away = None
+            for c in comp.get("competitors", []):
+                if c.get("homeAway") == "home":
+                    home = c
+                elif c.get("homeAway") == "away":
+                    away = c
+            if not home or not away:
+                continue
+            hn = (home.get("team") or {}).get("displayName") or ""
+            an = (away.get("team") or {}).get("displayName") or ""
+            for nm in (hn, an):
+                out.setdefault(nm, []).append({
+                    "home": hn, "away": an, "league": label, "iso": ev.get("date", ""),
+                    "venue": (comp.get("venue") or {}).get("fullName", "")})
     return out
 
 
@@ -277,9 +465,8 @@ SOURCE = {
     "icehockey": ("Ice hockey", "NHL", fetch_nhl_day),
     "basketball": ("Basketball", "NBA", lambda d: fetch_espn_day("basketball", d)),
     "tennis": ("Tennis", "ATP", lambda d: fetch_espn_day("tennis", d)),
-    "tabletennis": ("Table tennis", "WTT", lambda d: fetch_espn_day("tabletennis", d)),
 }
-DAY_SOURCES = {"baseball", "icehockey", "basketball", "tennis", "tabletennis"}
+DAY_SOURCES = {"baseball", "icehockey", "basketball", "tennis"}
 
 
 # ==========================================================================
@@ -527,7 +714,7 @@ def build_sport_streaks(sport: str, games: list[dict], upcoming: dict[str, list[
                 "id": f"{slug(name)}-{t['id']}",
                 "team": name, "teamShort": slot["short"],
                 "league": slot["league"], "country": None,
-                "type": t["id"], "typeLabel": t["label"],
+                "type": t["id"], "typeLabel": t["label"], "scope": scope,
                 "market": t["market"], "length": length, "polarity": t["polarity"],
                 "form": form,
                 "recent": [{"date": r["date"], "opp": r["opp"], "home": r["home"],
@@ -597,34 +784,6 @@ def upcoming_nfl(games: list[dict]) -> dict[str, list[dict]]:
     return out
 
 
-def upcoming_espn(key: str) -> dict[str, list[dict]]:
-    path, league, _sport = ESPN[key]
-    today = datetime.now(WAT).date()
-    out: dict[str, list[dict]] = {}
-    for i in range(FIXTURE_DAYS):
-        day = (today + timedelta(days=i)).strftime("%Y-%m-%d")
-        j = http_json(f"https://site.api.espn.com/apis/site/v2/sports/{path}"
-                      f"/scoreboard?dates={day.replace('-', '')}")
-        for ev in (j or {}).get("events", []):
-            comp = (ev.get("competitions") or [{}])[0]
-            home = away = None
-            for c in comp.get("competitors", []):
-                if c.get("homeAway") == "home":
-                    home = c
-                elif c.get("homeAway") == "away":
-                    away = c
-            if not home or not away:
-                continue
-            hn = (home.get("team") or {}).get("displayName") or ""
-            an = (away.get("team") or {}).get("displayName") or ""
-            for nm in (hn, an):
-                out.setdefault(nm, []).append({
-                    "home": hn, "away": an, "league": league, "iso": ev.get("date", ""),
-                    "venue": (comp.get("venue") or {}).get("fullName", ""),
-                })
-    return out
-
-
 def upcoming_mlb() -> dict[str, list[dict]]:
     today = datetime.now(WAT).date()
     out: dict[str, list[dict]] = {}
@@ -666,6 +825,117 @@ def upcoming_nhl() -> dict[str, list[dict]]:
                         "venue": (g.get("venue") or {}).get("default", "")})
     return out
 
+
+
+# ==========================================================================
+# Pricing: model odds for every sport, so selections can join the tickets
+# ==========================================================================
+
+MARGIN = 0.055
+P_MAX = 0.90
+ODDS_FLOOR = 1.02
+SHRINK_K = 6.0
+LOOKBACK = 20
+
+
+def hit_rate(rows: list[dict], t: dict, scope: str) -> tuple[int, int]:
+    hits = considered = 0
+    for r in reversed(rows):
+        if scope == "home" and not r["home"]:
+            continue
+        if scope == "away" and r["home"]:
+            continue
+        considered += 1
+        if t["pred"](r):
+            hits += 1
+        if considered >= LOOKBACK:
+            break
+    return hits, considered
+
+
+def sport_baselines(games: list[dict], sport: str) -> dict:
+    """sport+type -> base rate, measured over all stored games."""
+    agg: dict[str, list[int]] = {}
+    for slot in side_rows(games, sport).values():
+        for r in slot["rows"]:
+            for t in TYPES[sport]:
+                if any(m in BASELINE_SKIP for m in (t["market"],)):
+                    continue
+                k = t["id"]
+                a = agg.setdefault(k, [0, 0])
+                a[0] += 1
+                if t["pred"](r):
+                    a[1] += 1
+    return {k: (v[1] / v[0]) for k, v in agg.items() if v[0] >= 25}
+
+
+BASELINE_SKIP = {"spread"}          # line-dependent, base rate is meaningless
+
+
+def price_sport(sport: str, games: list[dict], baselines: dict) -> dict[str, dict]:
+    """team -> {type_id: price}"""
+    out: dict[str, dict] = {}
+    teams = side_rows(games, sport)
+    for name, slot in teams.items():
+        rows = slot["rows"]
+        if len(rows) < 4:
+            continue
+        per: dict[str, dict] = {}
+        for t in TYPES[sport]:
+            if t["market"] in BASELINE_SKIP:
+                continue
+            hits, n = hit_rate(rows, t, t.get("scope", "any"))
+            if n < 3:
+                continue
+            base = baselines.get(t["id"], 0.5)
+            p = (hits + SHRINK_K * base) / (n + SHRINK_K)
+            p_used = min(max(p, 0.01), P_MAX)
+            per[t["id"]] = {
+                "hits": hits, "n": n, "base": round(base, 3),
+                "p": round(p, 4), "pUsed": round(p_used, 4),
+                "fair": round(1.0 / p_used, 2),
+                "odds": max(ODDS_FLOOR, round((1.0 / p_used) * (1.0 - MARGIN), 2)),
+                "record": f"{hits}/{n}",
+            }
+        out[name] = per
+    return out
+
+
+def sport_selections(sport: str, games: list[dict], upcoming: dict, pricebook: dict,
+                     window_hours: float = 26) -> list[dict]:
+    """Priced runs whose next match kicks off inside the window."""
+    now = time.time()
+    limit = now + window_hours * 3600
+    streaks = build_sport_streaks(sport, games, upcoming)
+    out = []
+    for run in streaks:
+        nxt = run.get("next")
+        if not nxt or not nxt.get("ts"):
+            continue
+        if not (now - 1800 <= nxt["ts"] <= limit):
+            continue
+        prices = pricebook.get(run["team"])
+        if not prices:
+            continue
+        scope = run.get("scope", "any")
+        if scope == "home" and not nxt["home"]:
+            continue
+        if scope == "away" and nxt["home"]:
+            continue
+        price = prices.get(run["type"])
+        if not price or price["n"] < 8:
+            continue
+        out.append({
+            "sport": sport, "league": run["league"], "country": run["league"],
+            "team": run["team"], "opponent": nxt["opponent"], "home": nxt["home"],
+            "headline": nxt["headline"], "ts": nxt["ts"], "date": nxt["date"],
+            "type": run["type"], "typeLabel": run["typeLabel"], "market": run["market"],
+            "polarity": run["polarity"], "run": run["length"], "form": run["form"],
+            "confidence": round(price["p"] * 100, 1), "p": price["p"],
+            "odds": price["odds"], "fairOdds": price["fair"], "record": price["record"],
+            "fixtureId": f"{run['id']}-{nxt['ts']}",
+        })
+    return out
 
 # ==========================================================================
 # Orchestration
@@ -714,8 +984,10 @@ def main() -> int:
     ap.add_argument("--days", type=int, default=3, help="recent days refreshed each run")
     ap.add_argument("--chunk-days", type=int, default=30, help="backfill chunk size")
     ap.add_argument("--max-requests", type=int, default=1500)
+    ap.add_argument("--sport-budget", type=int, default=420,
+                    help="max requests for any single sport in one run")
     ap.add_argument("--max-minutes", type=float, default=60)
-    ap.add_argument("--horizon-days", type=int, default=400, help="how far back to build")
+    ap.add_argument("--horizon-days", type=int, default=430, help="how far back to build")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -726,6 +998,7 @@ def main() -> int:
     log(f"multi-sport pipeline — mode={args.mode}")
 
     sports_out: dict[str, dict] = {}
+    selections: list[dict] = []
     for sport, (label, league, _f) in SOURCE.items():
         try:
             # ---------------- American football: one request, full history ----------
@@ -750,10 +1023,14 @@ def main() -> int:
                 end = str(today)
                 budget = [0]
 
+                sport_budget = [0]
+
                 def fetch_day(day: str):
-                    if budget[0] >= args.max_requests or time.time() > deadline:
+                    if (budget[0] >= args.max_requests or sport_budget[0] >= args.sport_budget
+                            or time.time() > deadline):
                         return []
                     budget[0] += 1
+                    sport_budget[0] += 1
                     return SOURCE[sport][2](day)
 
                 have = load_history(sport)
@@ -810,6 +1087,12 @@ def main() -> int:
 
             streaks = build_sport_streaks(sport, allgames, up)
             teams = len({g[side]["n"] for g in allgames for side in ("h", "a")})
+            if allgames:
+                baselines = sport_baselines(allgames, sport)
+                pricebook = price_sport(sport, allgames, baselines)
+                sells = sport_selections(sport, allgames, up, pricebook)
+                selections.extend(sells)
+                log(f"  {sport}: {len(sells)} priced selections inside 24h")
             as_of = max((g["date"] for g in allgames if g.get("date")), default=str(today))
             sports_out[sport] = {
                 "key": sport, "label": label, "league": league,
@@ -839,10 +1122,17 @@ def main() -> int:
                                  "leagues": [], "asOf": None, "eventCount": 0,
                                  "teamCount": 0, "streakCount": 0}
 
+    with open(os.path.join(DATA, "selections_sports.json"), "w", encoding="utf-8") as fh:
+        json.dump({"generatedAt": datetime.now(WAT).isoformat(timespec="seconds"),
+                   "horizonHours": 24, "count": len(selections),
+                   "selections": selections}, fh, ensure_ascii=False,
+                  separators=(",", ":"))
+    log(f"{len(selections)} sports selections inside 24h -> data/selections_sports.json")
+
     payload = {
         "generatedAt": datetime.now(WAT).isoformat(timespec="seconds"),
         "sports": sports_out,
-        "order": ["amfootball", "basketball", "baseball", "icehockey", "tennis", "tabletennis"],
+        "order": ["amfootball", "basketball", "baseball", "icehockey", "tennis"],
     }
     with open(OUT, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False, separators=(",", ":"))
