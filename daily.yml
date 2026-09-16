@@ -1,0 +1,105 @@
+name: Daily streaks update
+
+# Rebuilds the streak data every night and commits it.
+# The site (GitHub Pages) picks up the new data/streaks.json automatically.
+
+on:
+  # Runs once as soon as this workflow (or the pipeline) lands in the repo, so
+  # setup is verified without waiting for the first midnight.
+  push:
+    paths:
+      - "scripts/**"
+      - ".github/workflows/daily.yml"
+  schedule:
+    # 23:00 UTC == 00:00 WAT (Africa/Lagos) — the midnight update
+    - cron: "0 23 * * *"
+    # 05:00 UTC == 06:00 WAT — catch-up for late kickoffs (MLS / Liga MX finish
+    # after midnight WAT) and for any GitHub scheduler delay
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Pipeline mode"
+        required: false
+        default: full
+        type: choice
+        options: [full, daily, backfill, rebuild]
+      chunk_days:
+        description: "Days of history to backfill per chunk (backfill mode)"
+        required: false
+        default: "21"
+      max_minutes:
+        description: "Wall-clock budget for this run, in minutes"
+        required: false
+        default: "240"
+      max_details:
+        description: "Stats requests allowed in this run (8000 ≈ 2 months of history)"
+        required: false
+        default: "8000"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: hotstreaks-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Show current progress
+        run: |
+          echo "history files:";    ls -la data/history || true
+          echo "state:";            cat data/state.json || true
+
+      - name: Update streak data
+        env:
+          MODE: ${{ github.event.inputs.mode || 'full' }}
+          CHUNK: ${{ github.event.inputs.chunk_days || '21' }}
+          BUDGET: ${{ github.event.inputs.max_minutes || '240' }}
+          DETAILS: ${{ github.event.inputs.max_details || '8000' }}
+        run: |
+          python3 scripts/hotstreaks.py \
+            --mode "$MODE" \
+            --days 4 \
+            --chunk-days "$CHUNK" \
+            --max-details "$DETAILS" \
+            --max-minutes "$BUDGET" \
+            --venue-budget 60
+
+      - name: Sanity-check the output
+        run: |
+          python3 - <<'PY'
+          import json, sys
+          d = json.load(open("data/streaks.json"))
+          print(f"{d['streakCount']} runs · {d['teamCount']} teams · "
+                f"{d['eventCount']} matches · as of {d['asOf']}")
+          assert d["streakCount"] > 0, "no streaks produced"
+          assert d["eventCount"] > 0, "no matches in history"
+          missing = [k for k in ("asOf","leagues","types","markets","streaks") if k not in d]
+          assert not missing, f"missing keys: {missing}"
+          PY
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name  "hotstreaks-bot"
+          git config user.email "hotstreaks-bot@users.noreply.github.com"
+          [ -d data ] && git add data || { echo "no data/ directory"; exit 0; }
+          if git diff --cached --quiet; then
+            echo "No data changes — nothing to commit."
+            exit 0
+          fi
+          git commit -m "chore(data): streaks update $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git pull --rebase --autostash origin "${GITHUB_REF_NAME:-main}" || true
+          git push
