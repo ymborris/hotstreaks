@@ -301,6 +301,16 @@ input[type="range"] { width: 100%; accent-color: var(--hot); }
   .rrow .right { text-align: right; font-family: var(--mono); }
   .rrow .right .big { font-size: 16px; font-weight: 700; color: var(--good); }
   .rrow .right .small { font-size: 11px; color: var(--muted); }
+  .sport-tag {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); border: 1px solid var(--line); border-radius: 999px;
+    padding: 1px 6px; margin-right: 4px; white-space: nowrap;
+  }
+  .window-tag {
+    font-family: var(--mono); font-size: 10.5px; color: var(--today);
+    border: 1px solid rgba(255, 209, 102, 0.35); border-radius: 999px;
+    padding: 1px 7px; margin-left: 6px; white-space: nowrap;
+  }
   .ticket { border: 1px solid var(--line); background: var(--bg-elev); border-radius: 14px; padding: 15px; margin-bottom: 16px; }
   .ticket h4 { margin: 0 0 3px; font-size: 15.5px; }
   .ticket .sub { color: var(--muted); font-size: 12px; margin-bottom: 10px; }
@@ -608,7 +618,6 @@ tr:hover td { background: #171b24; }
         <button data-sport="football" class="active">⚽ Football</button>
         <button data-sport="basketball">🏀 Basketball</button>
         <button data-sport="tennis">🎾 Tennis</button>
-        <button data-sport="tabletennis">🏓 Table tennis</button>
         <button data-sport="icehockey">🏒 Ice hockey</button>
         <button data-sport="baseball">⚾ Baseball</button>
         <button data-sport="amfootball">🏈 Am. football</button>
@@ -662,8 +671,12 @@ tr:hover td { background: #171b24; }
 
       <section class="panel" id="panel-acca">
         <div class="note">
-          Three independent 16-leg tickets built from the streak model, one leg per match so the
-          legs stay independent. Every leg is priced at least 1.50.
+          Three independent tickets built from every sport's streak model. A ticket takes the
+          strongest legs available, so it may mix sports — or end up all football, all basketball,
+          whatever the runs say that day. One leg per match, no team repeated, and
+          <b>every leg kicks off inside the next 24 hours</b>: the day's stake settles and rolls
+          into tomorrow, which is what makes the compounding work.
+          Every leg is priced at 1.50 or better.
           <b>Only place a leg if SportyBet's price is at or above its break-even</b> — that is what
           keeps the ticket value-positive. The Flexi figures are arithmetic on the modelled prices,
           not SportyBet's internal split, so check their calculator before staking.
@@ -1024,8 +1037,10 @@ function kickoffText(ts) {
 }
 
 function selRow(r, rank) {
+  // keep the rank cell in place even when unranked: .rrow is a 3-column grid
+  // (36px | 1fr | auto), so dropping it squeezed the whole row into 36px.
   return `<article class="rrow">
-    ${rank === null ? "" : `<div class="rk">${rank}</div>`}
+    <div class="rk">${rank === null || rank === undefined ? "" : rank}</div>
     <div>
       <h5>${esc(r.team)} <span class="market-tag">${esc(r.market || "")}</span></h5>
       <div class="meta">${esc(r.typeLabel)} · run of <b>${r.run}</b> · ${esc(r.league)}
@@ -1050,7 +1065,48 @@ function renderHighOdds(rows) {
     : `<div class="note">No long-priced selections right now.</div>`;
 }
 
+function renderCrossSportTickets(payload) {
+  const tickets = payload.tickets || [];
+  if (!tickets.length) return false;
+  $("accaList").innerHTML = tickets.map((t) => {
+    const f = t.flexi || {}, o = t.outcomes || {};
+    const mix = Object.entries(t.sportBreakdown || {})
+      .map(([k, v]) => `${SPORT_ICON[Object.keys(SPORT_ICON).find((s) => SPORT_ICON[s] && k.toLowerCase().startsWith(s.slice(0, 4))) ] || ""} ${esc(k)} ${v}`.trim())
+      .join(" · ");
+    const legs = t.legs.map((l, i) => `<tr>
+        <td>${i + 1}</td>
+        <td>${esc(l.kickoff)}</td>
+        <td><span class="sport-tag">${SPORT_ICON[l.sport] || ""} ${esc(l.sportLabel || l.sport)}</span> ${esc(l.headline)}
+          <div style="color:var(--muted);font-size:11px">${esc(l.league)}</div></td>
+        <td>${esc(l.team)} — ${esc(l.typeLabel)}
+          <div style="color:var(--muted);font-size:11px">run of ${l.run} · ${esc(l.form || "")}</div></td>
+        <td>${l.confidence}%</td>
+        <td class="odds">${l.odds}</td>
+        <td class="be">${l.fairOdds}</td>
+      </tr>`).join("");
+    return `<section class="ticket">
+      <h4>${esc(t.name)} <span class="window-tag">next ${f.legs ? t.windowHours : 24}h</span></h4>
+      <div class="sub">${f.legs} legs · ${mix} · generated ${esc(payload.generatedAt || "")} · kickoffs WAT</div>
+      <div class="kv">
+        <div><b>${f.totalOdds}</b><span>total odds (all legs)</span></div>
+        <div><b>${o.anyReturnPct}%</b><span>chance of a Flexi return at max ${payload.maxLosses} losses</span></div>
+        <div><b>${f.worstCaseOdds}</b><span>return if exactly ${payload.maxLosses} legs lose</span></div>
+        <div><b>${o.expectedLosses}</b><span>expected losing legs</span></div>
+        <div><b>${f.minLegOdds}–${f.maxLegOdds}</b><span>leg odds range</span></div>
+      </div>
+      <table class="legtable">
+        <thead><tr><th>#</th><th>Kickoff</th><th>Sport / match</th><th>Selection</th><th>Conf.</th><th>Odds</th><th>Break-even</th></tr></thead>
+        <tbody>${legs}</tbody>
+      </table>
+    </section>`;
+  }).join("");
+  return true;
+}
+
 function renderAccas(tickets, analysis) {
+  if (ticketsPayload && (ticketsPayload.tickets || []).length && renderCrossSportTickets(ticketsPayload)) {
+    return;
+  }
   if (!tickets.length) {
     $("accaList").innerHTML = `<div class="note">No tickets could be built from the current run set.</div>`;
     return;
@@ -1086,6 +1142,12 @@ function renderAccas(tickets, analysis) {
 
 let footballData = null;
 let sportsPayload = null;
+let ticketsPayload = null;      // cross-sport tickets (data/tickets.json)
+
+const SPORT_ICON = {
+  football: "⚽", basketball: "🏀", tennis: "🎾", baseball: "⚾",
+  icehockey: "🏒", amfootball: "🏈", tabletennis: "🏓",
+};
 
 const SPORT_META = {
   basketball: { name: "Basketball", note: "NBA" },
@@ -1095,6 +1157,17 @@ const SPORT_META = {
   baseball: { name: "Baseball", note: "MLB" },
   amfootball: { name: "American football", note: "NFL" },
 };
+
+async function ensureTickets() {
+  if (ticketsPayload !== null) return ticketsPayload;
+  try {
+    const res = await fetch(`./data/tickets.json?t=${Date.now()}`, { cache: "no-store" });
+    ticketsPayload = res.ok ? await res.json() : { tickets: [] };
+  } catch (err) {
+    ticketsPayload = { tickets: [] };
+  }
+  return ticketsPayload;
+}
 
 async function ensureSports() {
   if (sportsPayload) return sportsPayload;
@@ -1127,15 +1200,17 @@ async function selectSport(key) {
   state.sport = key;
   [...$("sports").children].forEach((b) => b.classList.toggle("active", b.dataset.sport === key));
   const isFootball = key === "football";
-  // the analysis views are built from the football model only
+  // rankings and high odds come from the football model; the accumulator tab is
+  // cross-sport now, so it stays available whichever sport is selected.
   [...$("tabs").children].forEach((b) => {
-    b.classList.toggle("hidden", !isFootball && b.dataset.tab !== "streaks");
-    if (!isFootball) b.classList.remove("active");
+    const global = b.dataset.tab === "acca";
+    b.classList.toggle("hidden", !isFootball && !global && b.dataset.tab !== "streaks");
+    if (!isFootball && b.dataset.tab !== "acca") b.classList.remove("active");
   });
-  if (!isFootball) {
+  if (!isFootball && state.tab !== "acca") {
     state.tab = "streaks";
     [...$("tabs").children][0].classList.add("active");
-    ["streaks", "rank", "high", "acca"].forEach((t) => $("panel-" + t).classList.toggle("on", t === "streaks"));
+    ["streaks", "rank", "high", "acca"].forEach((t) => $("panel-" + t).classList.toggle("on", t === state.tab));
   }
 
   state.types = new Set();
@@ -1190,6 +1265,12 @@ async function loadData() {
 async function init() {
   bind();
   renderChips();
+  ensureTickets().then(() => {
+    if (state.tab === "acca") {
+      const a = state.data?.analysis || {};
+      renderAccas(a.accumulators || [], a);
+    }
+  }).catch(() => {});
   try {
     state.data = await loadData();
   } catch (err) {
