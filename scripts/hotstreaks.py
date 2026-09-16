@@ -54,7 +54,8 @@ DEFAULT_HORIZON = "2024-08-01"          # oldest date the backfill may reach
 MIN_STREAK = 3                          # matches — aligns with the dashboard's default filter
 RECENT_N = 6                            # run-detail lines per card
 FORM_N = 5                              # form dots
-FIXTURE_DAYS = 16                       # forward window for "next match"
+FIXTURE_DAYS = 25                       # forward window for "next match"
+                                        # (European matchdays are ~3 weeks apart)
 WORKERS_DETAIL = 6
 WORKERS_TREE = 4
 
@@ -69,6 +70,13 @@ HEADERS = {
 # dashboard label, country, FotMob primary league ids.
 # Three labels deliberately merge two competitions, matching the current site.
 LEAGUES = [
+    # European club competitions. League phase and qualifying rounds share a
+    # stable primaryId per competition, so both are merged under one label.
+    # They are tracked as their own competitions: European matches never bleed
+    # into a team's domestic runs.
+    ("UEFA Champions League",  "Europe",       [42, 10611]),
+    ("UEFA Europa League",     "Europe",       [73, 10613]),
+    ("UEFA Conference League", "Europe",       [10216, 10615]),
     ("Premier League",       "England",        [47]),
     ("Championship",         "England",        [48]),
     ("League One",           "England",        [108]),
@@ -107,11 +115,16 @@ ID_MAP = {i: (l, c) for l, c, ids in LEAGUES for i in ids}
 # (European nights, cups).  Anything else outside the 28 also shows up when a
 # tracked team plays in it, labelled with FotMob's own competition name.
 EXTRA_FIXTURE_IDS = {
-    42: "UEFA Champions League", 73: "UEFA Europa League",
-    10216: "UEFA Conference League", 44: "UEFA Europa Conference League",
-    45: "FA Cup", 133: "EFL Cup", 132: "Coupe de France",
-    136: "Coppa Italia", 141: "Copa del Rey", 73_1: "Taça de Portugal",
+    # Cosmetic labels for competitions that supply fixtures only (never history).
+    # Anything else falls back to FotMob's own competition name.
+    74: "UEFA Super Cup",
+    45: "Copa Libertadores",
+    299: "Copa Sudamericana",
+    297: "CONCACAF Champions Cup",
+    525: "AFC Champions League Elite",
 }
+
+LABEL_COUNTRY = {label: country for label, country, _ids in LEAGUES}
 
 MARKETS = [
     {"id": "goals", "label": "Goals / 1X2"},
@@ -541,6 +554,11 @@ def build_rows(matches: dict[int, dict]) -> dict[int, dict]:
 
     for slot in teams.values():
         slot["rows"].sort(key=lambda r: (r["date"], 0 if r["home"] else 1))
+        comps: list[str] = []
+        for r in slot["rows"]:
+            if r["lg"] not in comps:
+                comps.append(r["lg"])
+        slot["competitions"] = comps
     return teams
 
 
@@ -750,49 +768,56 @@ def build_streaks(matches: dict[int, dict], fixtures_by_team: dict[int, list[dic
         rows = slot["rows"]
         if not rows:
             continue
-        form = "".join(r["res"] for r in rows[-FORM_N:][::-1])
         nxt = next_fixture(fixtures_by_team.get(tid, []), tid, today, suffixes)
-        for t in TYPES:
-            scope = t.get("scope", "any")
-            length = 0
-            run: list[dict] = []
-            for r in reversed(rows):
-                if scope == "home" and not r["home"]:
+
+        by_competition: dict[str, list[dict]] = {}
+        for r in rows:
+            by_competition.setdefault(r["lg"], []).append(r)
+
+        for league, comp_rows in by_competition.items():
+            form = "".join(r["res"] for r in comp_rows[-FORM_N:][::-1])
+            for t in TYPES:
+                scope = t.get("scope", "any")
+                length = 0
+                run: list[dict] = []
+                for r in reversed(comp_rows):
+                    if scope == "home" and not r["home"]:
+                        continue
+                    if scope == "away" and r["home"]:
+                        continue
+                    if row_missing(r, t):
+                        if t["kind"] == "score" or r["has_stats"]:
+                            break                 # stat tracked but missing -> run ends
+                        continue                  # no stats for this match at all: ignore it
+                    if t["pred"](r):
+                        length += 1
+                        if len(run) < RECENT_N:
+                            run.append(r)
+                    else:
+                        break
+                if length < MIN_STREAK:
                     continue
-                if scope == "away" and r["home"]:
-                    continue
-                if row_missing(r, t):
-                    if t["kind"] == "score" or r["has_stats"]:
-                        break                     # stat tracked but missing -> run ends
-                    continue                      # no stats for this match at all: ignore it
-                if t["pred"](r):
-                    length += 1
-                    if len(run) < RECENT_N:
-                        run.append(r)
-                else:
-                    break
-            if length < MIN_STREAK:
-                continue
-            out.append({
-                "id": f"{slug(slot['name'])}-{t['id']}",
-                "team": slot["name"],
-                "teamShort": short_code(slot["name"], slot["short"]),
-                "league": slot["league"],
-                "country": slot["country"],
-                "type": t["id"],
-                "typeLabel": t["label"],
-                "market": t["market"],
-                "length": length,
-                "polarity": t["polarity"],
-                "form": form,
-                "recent": [{
-                    "date": r["date"], "opp": r["opp"], "home": r["home"],
-                    "score": r["score"], "result": r["res"],
-                    "stat": safe_fmt(t["fmt"], r),
-                } for r in run],
-                "next": nxt,
-                "matches": [],
-            })
+                name = slot["name"]
+                out.append({
+                    "id": f"{slug(name)}-{slug(league)}-{t['id']}",
+                    "team": name,
+                    "teamShort": short_code(name, slot["short"]),
+                    "league": league,
+                    "country": comp_rows[-1].get("ctry") or LABEL_COUNTRY.get(league),
+                    "type": t["id"],
+                    "typeLabel": t["label"],
+                    "market": t["market"],
+                    "length": length,
+                    "polarity": t["polarity"],
+                    "form": form,
+                    "recent": [{
+                        "date": r["date"], "opp": r["opp"], "home": r["home"],
+                        "score": r["score"], "result": r["res"],
+                        "stat": safe_fmt(t["fmt"], r),
+                    } for r in run],
+                    "next": nxt,
+                    "matches": [],
+                })
     out.sort(key=lambda s: (-s["length"], s["team"], s["type"]))
     return out
 
@@ -922,6 +947,19 @@ def main() -> int:
     if args.mode != "rebuild":
         start = (today - timedelta(days=args.days)).strftime("%Y-%m-%d")
         end = today.strftime("%Y-%m-%d")
+
+        # If the set of tracked competitions changes (e.g. European competitions
+        # are added), already-walked dates are missing those matches, so restart
+        # the backfill from the top. Stored matches are skipped, only new ones
+        # are fetched, so this is cheap.
+        signature = ",".join(str(i) for i in sorted(TRACKED_IDS))
+        if state.get("tracked") != signature:
+            log("tracked competitions changed — re-walking history from the top")
+            state["cursor"] = start
+            state["backfillDone"] = False
+        state["tracked"] = signature
+        save_state(state)
+
         log(f"refresh {start} .. {end}")
         written, pending = fetch_window(start, end, have, args.max_details, deadline,
                                         sink=append_history)
