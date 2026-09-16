@@ -84,8 +84,12 @@ jobs:
         run: |
           python3 scripts/sports.py --mode full \
             --days 4 --chunk-days 30 \
-            --max-requests 1200 --max-minutes 60 \
-            --horizon-days 420
+            --max-requests 2200 --max-minutes 70 --sport-budget 700 \
+            --horizon-days 430
+
+      - name: Build the day's tickets
+        run: |
+          python3 scripts/tickets.py --window 24 --size 16 --tickets 3 --max-losses 5
 
       - name: Sanity-check the output
         run: |
@@ -99,6 +103,17 @@ jobs:
           missing = [k for k in ("asOf","leagues","types","markets","streaks") if k not in d]
           assert not missing, f"missing keys: {missing}"
           import os
+          if os.path.exists("data/tickets.json"):
+              tk = json.load(open("data/tickets.json"))
+              print(f"tickets: {len(tk['tickets'])} · pool {tk['poolSize']} "
+                    f"({tk['poolInWindow']} inside 24h)")
+              for t in tk["tickets"]:
+                  mix = ", ".join(f"{k} {v}" for k, v in t["sportBreakdown"].items())
+                  print(f"  {t['name']:22} {t['flexi']['legs']:2} legs · "
+                        f"odds {t['flexi']['totalOdds']:,} · {mix}")
+                  assert t["flexi"]["allLegsAboveFloor"], "a leg fell below 1.50"
+              if tk["tickets"]:
+                  assert tk["poolInWindow"] > 0, "no selections inside the 24h window"
           if os.path.exists("data/sports.json"):
               sp = json.load(open("data/sports.json"))
               for key, sec in sp["sports"].items():
