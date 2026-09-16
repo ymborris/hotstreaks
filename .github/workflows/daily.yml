@@ -78,6 +78,15 @@ jobs:
             --max-minutes "$BUDGET" \
             --venue-budget 60
 
+      - name: Update other sports
+        env:
+          BUDGET: ${{ github.event.inputs.max_minutes || '240' }}
+        run: |
+          python3 scripts/sports.py --mode full \
+            --days 4 --chunk-days 30 \
+            --max-requests 1200 --max-minutes 60 \
+            --horizon-days 420
+
       - name: Sanity-check the output
         run: |
           python3 - <<'PY'
@@ -89,6 +98,12 @@ jobs:
           assert d["eventCount"] > 0, "no matches in history"
           missing = [k for k in ("asOf","leagues","types","markets","streaks") if k not in d]
           assert not missing, f"missing keys: {missing}"
+          import os
+          if os.path.exists("data/sports.json"):
+              sp = json.load(open("data/sports.json"))
+              for key, sec in sp["sports"].items():
+                  flag = "ok" if sec["available"] else "unavailable"
+                  print(f"  {key:12} {flag:12} {sec['streakCount']} runs")
           PY
 
       - name: Commit refreshed data
