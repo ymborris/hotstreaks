@@ -84,7 +84,7 @@ jobs:
         run: |
           python3 scripts/sports.py --mode full \
             --days 4 --chunk-days 30 \
-            --max-requests 2200 --max-minutes 70 --sport-budget 700 \
+            --max-requests 2200 --max-minutes 80 --sport-budget 900 --stats-cap 140 \
             --horizon-days 430
 
       - name: Build the day's tickets
@@ -118,7 +118,11 @@ jobs:
               sp = json.load(open("data/sports.json"))
               for key, sec in sp["sports"].items():
                   flag = "ok" if sec["available"] else "unavailable"
-                  print(f"  {key:12} {flag:12} {sec['streakCount']} runs")
+                  print(f"  {key:12} {flag:12} {sec['league']:38} {sec['streakCount']} runs")
+                  for lg in sec.get("leagueInfo", []):
+                      nxt = (lg.get("nextGame") or "no fixtures yet")[:16]
+                      print(f"      {lg['label']:12} {lg['games']:>5} games · "
+                            f"{lg['runs']:>4} runs · next {nxt}")
           PY
 
       - name: Commit refreshed data
