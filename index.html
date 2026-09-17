@@ -271,6 +271,18 @@ input[type="range"] { width: 100%; accent-color: var(--hot); }
   .sports button.active { color: #fff; border-color: var(--hot); background: rgba(255,106,26,.14); }
   .sports button.soon { opacity: .55; }
   .sports button[disabled] { opacity: .42; cursor: not-allowed; }
+  .lgstrip { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
+  .lgstrip .lg {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid var(--line); background: var(--bg-elev); border-radius: 999px;
+    padding: 5px 11px; font-size: 12px; color: var(--muted);
+  }
+  .lgstrip .lg b { color: var(--text); font-weight: 600; }
+  .lgstrip .lg .dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--dim); flex: 0 0 auto;
+  }
+  .lgstrip .lg.live .dot { background: var(--good); box-shadow: 0 0 6px rgba(62, 224, 160, .6); }
+  .lgstrip .lg.soon .dot { background: var(--today); }
   .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 16px; }
   .tabs button {
     border: 1px solid var(--line); background: var(--bg-elev); color: var(--muted);
@@ -622,6 +634,8 @@ tr:hover td { background: #171b24; }
         <button data-sport="baseball">⚾ Baseball</button>
         <button data-sport="amfootball">🏈 Am. football</button>
       </nav>
+
+      <div class="lgstrip" id="leagueStrip"></div>
 
       <nav class="tabs" id="tabs">
         <button data-tab="streaks" class="active">Streaks</button>
@@ -1150,12 +1164,12 @@ const SPORT_ICON = {
 };
 
 const SPORT_META = {
-  basketball: { name: "Basketball", note: "NBA" },
-  tennis: { name: "Tennis", note: "ATP Tour" },
+  basketball: { name: "Basketball", note: "NBA · WNBA · NCAA" },
+  tennis: { name: "Tennis", note: "ATP · WTA" },
   tabletennis: { name: "Table tennis", note: "WTT" },
   icehockey: { name: "Ice hockey", note: "NHL" },
   baseball: { name: "Baseball", note: "MLB" },
-  amfootball: { name: "American football", note: "NFL" },
+  amfootball: { name: "American football", note: "NFL · NCAA" },
 };
 
 async function ensureTickets() {
@@ -1175,6 +1189,33 @@ async function ensureSports() {
   if (!res.ok) throw new Error("no sports data");
   sportsPayload = await res.json();
   return sportsPayload;
+}
+
+function fmtDay(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (isNaN(d)) return "";
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+function renderLeagueStrip(info) {
+  const strip = $("leagueStrip");
+  if (!info || !info.length) { strip.innerHTML = ""; return; }
+  strip.innerHTML = info.map((lg) => {
+    const games = (lg.games || 0).toLocaleString("en-GB");
+    const soon = !!lg.nextGame && (new Date(lg.nextGame) - Date.now()) < 14 * 864e5;
+    const cls = soon ? "live" : (lg.games ? "" : "soon");
+    let tail;
+    if (lg.nextGame) {
+      tail = `next ${fmtDay(lg.nextGame)}`;
+    } else if (lg.games) {
+      tail = `last played ${fmtDay(lg.lastGame)} · no fixtures yet`;
+    } else {
+      tail = "season not started";
+    }
+    return `<span class="lg ${cls}" title="${esc(lg.label)}: ${games} games stored, ${lg.runs || 0} runs">
+      <i class="dot"></i><b>${esc(lg.label)}</b> ${games} games · ${tail}</span>`;
+  }).join("");
 }
 
 function fillLeagues(list) {
@@ -1220,6 +1261,9 @@ async function selectSport(key) {
   state.limit = PAGE;
 
   if (isFootball) {
+    renderLeagueStrip([{ label: "Football", games: footballData.eventCount,
+                         runs: footballData.streakCount,
+                         nextGame: null, lastGame: footballData.asOf }]);
     state.data = footballData;
     $("subtitle").textContent = `${footballData.streakCount} runs · ${footballData.teamCount} teams · ${footballData.eventCount} matches · as of ${footballData.asOf} · kickoffs WAT`;
     fillLeagues(footballData.leagues);
@@ -1237,6 +1281,7 @@ async function selectSport(key) {
   }
   const sec = (payload.sports || {})[key];
   if (!sec) { showSportMessage("No data for this sport."); return; }
+  renderLeagueStrip(sec.leagueInfo || []);
   if (!sec.available || !(sec.streaks || []).length) {
     showSportMessage(`${SPORT_META[key]?.name || key}: ${sec.reason || "no data yet"} — the pipeline retries on every run.`);
     $("subtitle").textContent = `${SPORT_META[key]?.name || key} · awaiting data`;
