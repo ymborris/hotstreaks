@@ -269,6 +269,7 @@ input[type="range"] { width: 100%; accent-color: var(--hot); }
     border-radius: 999px; padding: 7px 13px; font-size: 12.5px; font-weight: 600;
   }
   .sports button.active { color: #fff; border-color: var(--hot); background: rgba(255,106,26,.14); }
+  .sports button, .tabs button, .seg button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .sports button.soon { opacity: .55; }
   .sports button[disabled] { opacity: .42; cursor: not-allowed; }
   .lgstrip { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 12px; }
@@ -282,6 +283,7 @@ input[type="range"] { width: 100%; accent-color: var(--hot); }
     width: 7px; height: 7px; border-radius: 50%; background: var(--dim); flex: 0 0 auto;
   }
   .lgstrip .lg.live .dot { background: var(--good); box-shadow: 0 0 6px rgba(62, 224, 160, .6); }
+  .lgstrip .lgmore { color: var(--today); border-style: dashed; cursor: pointer; font-weight: 600; }
   .lgstrip .lg.soon .dot { background: var(--today); }
   .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 0 0 16px; }
   .tabs button {
@@ -318,6 +320,13 @@ input[type="range"] { width: 100%; accent-color: var(--hot); }
     color: var(--muted); border: 1px solid var(--line); border-radius: 999px;
     padding: 1px 6px; margin-right: 4px; white-space: nowrap;
   }
+  .ok-tag, .warn-tag {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .04em; text-transform: uppercase;
+    border-radius: 999px; padding: 2px 8px; margin-left: 6px; vertical-align: middle;
+  }
+  .ok-tag { color: #7ee0a8; border: 1px solid rgba(126, 224, 168, .45); background: rgba(126, 224, 168, .08); }
+  .warn-tag { color: #ffb4a2; border: 1px solid rgba(255, 180, 162, .5); background: rgba(255, 180, 162, .1); }
+  .build { font-family: var(--mono); font-size: 10.5px; color: var(--muted); margin-top: 5px; letter-spacing: .02em; }
   .window-tag {
     font-family: var(--mono); font-size: 10.5px; color: var(--today);
     border: 1px solid rgba(255, 209, 102, 0.35); border-radius: 999px;
@@ -602,6 +611,8 @@ tr:hover td { background: #171b24; }
         <div>
           <h2 id="headline">Active betting runs</h2>
           <div class="sub" id="subtitle">Loading worldwide results…</div>
+          <div class="build" id="buildStamp">build v3 · 17 Sep 2026 · 15-leg Flexi tickets · all kickoffs WAT
+            · <span id="tapProbe">tap test: waiting for a tap…</span></div>
         </div>
         <div class="controls">
           <button class="mobile-filters" id="openFilters">Filters</button>
@@ -687,10 +698,13 @@ tr:hover td { background: #171b24; }
         <div class="note">
           Three independent tickets built from every sport's streak model. A ticket takes the
           strongest legs available, so it may mix sports — or end up all football, all basketball,
-          whatever the runs say that day. One leg per match, no team repeated, and
-          <b>every leg kicks off inside the next 24 hours</b>: the day's stake settles and rolls
-          into tomorrow, which is what makes the compounding work.
-          Every leg is priced at 1.50 or better.
+          whatever the runs say that day. Every ticket carries <b>at least 15 legs</b>, the minimum
+          SportyBet's <b>Flexi</b> option wants, with <b>max 5 losses</b> as the insurance line; no
+          team appears twice on one ticket and the day's matches are shared out between the three
+          tickets, so they do not cannibalise each other (a second leg from the same match is marked
+          in the table when it is needed to reach 15). <b>Every leg kicks off inside the next 24
+          hours</b>: the day's stake settles and rolls into tomorrow, which is what makes the
+          compounding work. Every leg is priced at 1.50 or better.
           <b>Only place a leg if SportyBet's price is at or above its break-even</b> — that is what
           keeps the ticket value-positive. The Flexi figures are arithmetic on the modelled prices,
           not SportyBet's internal split, so check their calculator before staking.
@@ -742,12 +756,14 @@ const MARKET_FALLBACK = [
   { id: "other", label: "Other" },
 ];
 
+const WAT_TZ = "Africa/Lagos";   // everything on this page is WAT (UTC+1)
+
 function esc(s) {
   return String(s ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;");
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function pretty(name) {
@@ -964,6 +980,23 @@ function resetLimitAndRender() {
   render();
 }
 
+function bindTapProbe() {
+  const probe = () => document.getElementById("tapProbe");
+  document.addEventListener("pointerdown", (e) => {
+    const t = probe();
+    if (!t) return;
+    const b = e.target && e.target.closest ? e.target.closest("#sports button, #tabs button") : null;
+    t.textContent = b
+      ? `tap reached the page: ${b.dataset.sport || b.dataset.tab} ✓`
+      : "tap reached the page (not on a button)";
+  }, true);
+  document.addEventListener("click", (e) => {
+    const t = probe();
+    if (!t) return;
+    if (t.textContent.startsWith("tap reached")) t.textContent += " · click handled ✓";
+  }, true);
+}
+
 function bind() {
   $("search").addEventListener("input", (e) => {
     state.q = e.target.value;
@@ -1098,10 +1131,16 @@ function renderCrossSportTickets(payload) {
         <td class="odds">${l.odds}</td>
         <td class="be">${l.fairOdds}</td>
       </tr>`).join("");
+    const legCount = f.legs || t.legs.length;
+    const minLegs = t.minLegs || 15;
+    const short = t.meetsMinimum === false || legCount < minLegs;
     return `<section class="ticket">
-      <h4>${esc(t.name)} <span class="window-tag">next ${f.legs ? t.windowHours : 24}h</span></h4>
-      <div class="sub">${f.legs} legs · ${mix} · generated ${esc(payload.generatedAt || "")} · kickoffs WAT</div>
+      <h4>${esc(t.name)} <span class="window-tag">next ${t.windowHours || 24}h</span>${short
+        ? ` <span class="warn-tag">only ${legCount} legs — under the ${minLegs}-leg Flexi minimum</span>`
+        : ` <span class="ok-tag">Flexi ready · ${legCount} ≥ ${minLegs} legs</span>`}</h4>
+      <div class="sub">${legCount} legs from ${t.distinctMatches || "?"} matches${t.sharedLegs ? ` (${t.sharedLegs} second leg${t.sharedLegs > 1 ? "s" : ""} from a match already on this ticket)` : ""} · ${mix} · generated ${esc(payload.generatedAt || "")} · kickoffs WAT</div>
       <div class="kv">
+        <div><b>${legCount} / ${minLegs}</b><span>legs (SportyBet Flexi minimum)</span></div>
         <div><b>${f.totalOdds}</b><span>total odds (all legs)</span></div>
         <div><b>${o.anyReturnPct}%</b><span>chance of a Flexi return at max ${payload.maxLosses} losses</span></div>
         <div><b>${f.worstCaseOdds}</b><span>return if exactly ${payload.maxLosses} legs lose</span></div>
@@ -1140,8 +1179,8 @@ function renderAccas(tickets, analysis) {
       <h4>${esc(t.name)}</h4>
       <div class="sub">${f.legs} legs · ${(t.leagues || []).length} competitions · generated ${esc(analysis.generatedAt || "")}</div>
       <div class="kv">
-        <div><b>${f.totalOdds}</b><span>total odds (all 16)</span></div>
-        <div><b>${o.anyReturnPct}%</b><span>chance of a Flexi return at max ${5} losses</span></div>
+        <div><b>${f.totalOdds}</b><span>total odds (all ${f.legs || t.legs.length})</span></div>
+        <div><b>${o.anyReturnPct}%</b><span>chance of a Flexi return at max ${analysis.maxLosses || 5} losses</span></div>
         <div><b>${o.expectedLosses}</b><span>expected losing legs</span></div>
         <div><b>${o.breakEvenAvgOdds}</b><span>break-even avg odds per leg</span></div>
         <div><b>${f.minLegOdds}–${f.maxLegOdds || f.minLegOdds}</b><span>leg odds range</span></div>
@@ -1195,27 +1234,46 @@ function fmtDay(iso) {
   if (!iso) return "";
   const d = new Date(iso);
   if (isNaN(d)) return "";
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  // the page runs on WAT (Africa/Lagos) throughout - pin the zone here too, so a
+  // phone set to another timezone cannot shift a kickoff onto the neighbouring day
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: WAT_TZ });
+}
+
+let lgShowAll = false;
+
+function leaguePill(lg) {
+  const games = (lg.games || 0).toLocaleString("en-GB");
+  const soon = !!lg.nextGame && (new Date(lg.nextGame) - Date.now()) < 14 * 864e5;
+  const cls = soon ? "live" : (lg.games ? "" : "soon");
+  let tail;
+  if (lg.nextGame) {
+    tail = `next ${fmtDay(lg.nextGame)}`;
+  } else if (lg.games) {
+    tail = `last played ${fmtDay(lg.lastGame)} · no fixtures yet`;
+  } else {
+    tail = "no games stored yet";
+  }
+  return `<span class="lg ${cls}" title="${esc(lg.label)}${lg.country ? " · " + esc(lg.country) : ""}: ` +
+    `${games} games stored, ${lg.runs || 0} runs"><i class="dot"></i>` +
+    `<b>${esc(lg.label)}</b> ${games} games · ${tail}</span>`;
 }
 
 function renderLeagueStrip(info) {
   const strip = $("leagueStrip");
   if (!info || !info.length) { strip.innerHTML = ""; return; }
-  strip.innerHTML = info.map((lg) => {
-    const games = (lg.games || 0).toLocaleString("en-GB");
-    const soon = !!lg.nextGame && (new Date(lg.nextGame) - Date.now()) < 14 * 864e5;
-    const cls = soon ? "live" : (lg.games ? "" : "soon");
-    let tail;
-    if (lg.nextGame) {
-      tail = `next ${fmtDay(lg.nextGame)}`;
-    } else if (lg.games) {
-      tail = `last played ${fmtDay(lg.lastGame)} · no fixtures yet`;
-    } else {
-      tail = "season not started";
-    }
-    return `<span class="lg ${cls}" title="${esc(lg.label)}: ${games} games stored, ${lg.runs || 0} runs">
-      <i class="dot"></i><b>${esc(lg.label)}</b> ${games} games · ${tail}</span>`;
-  }).join("");
+  // with 49 competitions tracked the strip would be a wall of pills, so the
+  // default view is the ones playing in the next week - the rest sit behind a toggle
+  const soon = (lg) => lg.nextGame && (new Date(lg.nextGame) - Date.now()) < 7 * 864e5;
+  const week = info.filter(soon);
+  const shown = lgShowAll ? info : (week.length >= 6 ? week : info.slice(0, 14));
+  const hidden = info.length - shown.length;
+  strip.innerHTML = shown.map(leaguePill).join("") +
+    (hidden > 0
+      ? `<button class="lg lgmore" id="lgMore">＋ ${hidden} more competition${hidden > 1 ? "s" : ""}</button>`
+      : (lgShowAll ? `<button class="lg lgmore" id="lgFewer">− show fewer</button>` : ""));
+  const more = $("lgMore"), fewer = $("lgFewer");
+  if (more) more.onclick = () => { lgShowAll = true; renderLeagueStrip(info); };
+  if (fewer) fewer.onclick = () => { lgShowAll = false; renderLeagueStrip(info); };
 }
 
 function fillLeagues(list) {
@@ -1261,9 +1319,10 @@ async function selectSport(key) {
   state.limit = PAGE;
 
   if (isFootball) {
-    renderLeagueStrip([{ label: "Football", games: footballData.eventCount,
-                         runs: footballData.streakCount,
-                         nextGame: null, lastGame: footballData.asOf }]);
+    renderLeagueStrip(footballData.leagueInfo && footballData.leagueInfo.length
+      ? footballData.leagueInfo
+      : [{ label: "Football", games: footballData.eventCount,
+           runs: footballData.streakCount, nextGame: null, lastGame: footballData.asOf }]);
     state.data = footballData;
     $("subtitle").textContent = `${footballData.streakCount} runs · ${footballData.teamCount} teams · ${footballData.eventCount} matches · as of ${footballData.asOf} · kickoffs WAT`;
     fillLeagues(footballData.leagues);
@@ -1309,6 +1368,7 @@ async function loadData() {
 
 async function init() {
   bind();
+  bindTapProbe();
   renderChips();
   ensureTickets().then(() => {
     if (state.tab === "acca") {
