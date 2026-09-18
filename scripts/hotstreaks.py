@@ -108,6 +108,25 @@ LEAGUES = [
     ("Liga MX",              "Mexico",         [230]),
     ("Liga Profesional",     "Argentina",      [112]),
     ("J1 League",            "Japan",          [223]),
+    # Second wave of domestic leagues (Sept 2026). Labels are country-qualified
+    # where FotMob's own name would collide with a league already tracked above
+    # ("Premier League" x4, "Ligue 1", "Premiership"), because the dashboard keys
+    # every competition by this label.
+    ("Slovak Super Liga",         "Slovakia",               [176]),
+    ("Prva Liga",                 "Slovenia",               [173]),
+    ("Nemzeti Bajnokság I",       "Hungary",                [212]),
+    ("First Professional League", "Bulgaria",               [270]),
+    ("Ukrainian Premier League",  "Ukraine",                [441]),
+    ("Russian Premier League",    "Russia",                 [63]),
+    ("Eerste Divisie",            "Netherlands",            [111]),
+    ("HNL",                       "Croatia",                [252]),
+    ("Cypriot First Division",    "Cyprus",                 [136]),
+    ("Belarusian Premier League", "Belarus",                [263]),
+    ("Algerian Ligue 1",          "Algeria",                [516]),
+    ("Egyptian Premier League",   "Egypt",                  [519]),
+    ("Bosnian Premier League",    "Bosnia and Herzegovina", [267]),
+    ("Cymru Premier",             "Wales",                  [116]),
+    ("NIFL Premiership",          "Northern Ireland",       [129]),
 ]
 
 LEAGUE_LABELS = [l for l, _c, _i in LEAGUES]
@@ -859,7 +878,9 @@ def next_fixture(entries: list[dict], team_id: int, today: str, venues: dict) ->
         "date": f.get("date") or local.strftime("%Y-%m-%d"),
         "ts": int(when.timestamp()),                      # UTC epoch, for time windows
         "hours": round((when - now).total_seconds() / 3600.0, 2),
-        "kickoffLabel": f"{local.strftime('%A %b')} {local.day} · {local.strftime('%H:%M')}",
+        # "Thu 17 Sep · 20:00" - same shape as the other sports and the tickets,
+        # so a kickoff reads the same wherever it appears on the page
+        "kickoffLabel": f"{local.strftime('%a %d %b')} · {local.strftime('%H:%M')}",
         "opponent": (away if is_home else home)["n"],
         "home": is_home,
         "venue": venues.get(str(f.get("id")), ""),
@@ -941,6 +962,8 @@ MARGIN = 0.055                 # typical bookmaker overround on these markets
 P_MAX = 0.90                   # a model never "knows" a selection is certain:
                                # prices shorter than this would be fantasy
 ODDS_FLOOR = 1.02              # no real book prices a tracked market below this
+P_MIN = 0.02                   # nor is a tracked run ever a write-off: a competition
+                               # whose base rate measured zero must not divide by zero
 SHRINK_K = 6.0                 # pseudo-matches pulling a team's rate to the mean
 LOOKBACK = 20                  # appearances used to estimate a team's rate
 TOP_LEAGUES = {
@@ -950,6 +973,15 @@ TOP_LEAGUES = {
     "Belgian Pro League": 0.85, "Süper Lig": 0.84, "Scottish Premiership": 0.84,
     "UEFA Champions League": 0.95, "UEFA Europa League": 0.90,
     "UEFA Conference League": 0.86,
+    # Second wave: solid top flights, weighted below the big five so the power
+    # rankings keep their top-5-Europe bias, and above the 0.74 default.
+    "Russian Premier League": 0.76, "Ukrainian Premier League": 0.75,
+    "HNL": 0.73, "Nemzeti Bajnokság I": 0.72, "Eerste Divisie": 0.70,
+    "Slovak Super Liga": 0.70, "Prva Liga": 0.68, "First Professional League": 0.68,
+    "Cypriot First Division": 0.68, "Egyptian Premier League": 0.67,
+    "Algerian Ligue 1": 0.66, "Bosnian Premier League": 0.65,
+    "Belarusian Premier League": 0.62, "Cymru Premier": 0.62,
+    "NIFL Premiership": 0.62,
 }
 
 
@@ -991,7 +1023,9 @@ def build_baselines(matches: dict[int, dict]) -> dict:
                 a[0] += 1
                 if t["pred"](r):
                     a[1] += 1
-    return {k: (v[1] / v[0]) for k, v in agg.items() if v[0] >= 30}
+    # keep 0 and 1 out: a base rate of exactly zero would price a selection at
+    # infinite odds, and it usually means the sample is too young to read
+    return {k: (v[1] / v[0]) for k, v in agg.items() if v[0] >= 30 and 0 < v[1] < v[0]}
 
 
 def estimate(matches: dict[int, dict], baselines: dict) -> dict:
@@ -1012,9 +1046,10 @@ def estimate(matches: dict[int, dict], baselines: dict) -> dict:
                 continue
             base = baselines.get((rows[-1]["lg"], t["id"]), 0.5)
             p = (hits + SHRINK_K * base) / (n + SHRINK_K)
-            # cap the estimate: unmodelled risk (rotation, injuries, red cards)
-            # means no selection is ever a certainty
-            p_capped = min(p, P_MAX)
+            # clamp the estimate: unmodelled risk (rotation, injuries, red cards)
+            # means no selection is ever a certainty, and a type that has never
+            # landed in this competition (base rate 0) must not price at infinity
+            p_capped = min(max(p, P_MIN), P_MAX)
             odds = max(ODDS_FLOOR, round((1.0 / p_capped) * (1.0 - MARGIN), 2))
             per_type[t["id"]] = {
                 "hits": hits, "n": n, "base": round(base, 3),
@@ -1448,6 +1483,37 @@ def main() -> int:
     log(f"  {len(selections)} selections priced · {len(rankings)} ranked · "
         f"{len(longshots)} longshots · {len(accas)} tickets")
 
+    # per-league status for the strip: what is stored, and when each competition
+    # next plays. Built from the archive and the fixture feed, so a newly added
+    # league shows up here as soon as it has one game stored.
+    games_by_league: dict[str, list] = {}
+    for m in have.values():
+        games_by_league.setdefault(m.get("lg") or "", []).append(m)
+    runs_by_league: dict[str, int] = {}
+    for st in streaks:
+        lg = st.get("league") or ""
+        runs_by_league[lg] = runs_by_league.get(lg, 0) + 1
+    fixtures_by_league: dict[str, list] = {}
+    for rows in fixtures_by_team.values():
+        for f in rows:
+            fixtures_by_league.setdefault(f.get("lg") or "", []).append(f)
+
+    league_info = []
+    for label in LEAGUE_LABELS:
+        lg_games = games_by_league.get(label, [])
+        nxt = min((f.get("utc") or "" for f in fixtures_by_league.get(label, [])
+                   if f.get("utc")), default=None)
+        if not lg_games and not nxt:
+            continue          # neither played nor scheduled yet: nothing to show
+        league_info.append({
+            "key": slug(label), "label": label, "country": LABEL_COUNTRY.get(label, ""),
+            "games": len(lg_games), "runs": runs_by_league.get(label, 0),
+            "lastGame": max((m.get("date") or "" for m in lg_games), default=None),
+            "nextGame": nxt,
+        })
+    league_info.sort(key=lambda lg: (0 if lg["nextGame"] else 1, lg["nextGame"] or "",
+                                     -lg["runs"], -lg["games"]))
+
     as_of = max((m.get("date") or "" for m in have.values()), default=today.strftime("%Y-%m-%d"))
     teams_count = len({t for m in have.values() for t in (m["h"].get("id"), m["a"].get("id")) if t})
     payload = {
@@ -1457,7 +1523,10 @@ def main() -> int:
         "eventCount": len(have),
         "teamCount": teams_count,
         "streakCount": len(streaks),
-        "leagues": LEAGUE_LABELS,
+        # the filter dropdown lists what actually has runs (in competition order);
+        # the full tracked set is in leagueInfo, which drives the strip
+        "leagues": [l for l in LEAGUE_LABELS if runs_by_league.get(l)],
+        "leagueInfo": league_info,
         "types": [{k: t[k] for k in ("id", "label", "market", "polarity")} for t in TYPES],
         "markets": MARKETS,
         "streaks": streaks,

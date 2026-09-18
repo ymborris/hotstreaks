@@ -38,12 +38,18 @@ SPORT_LABEL = {
     "baseball": "Baseball", "amfootball": "American football",
 }
 
-# name, odds band, max legs per competition, max legs per sport, selection style
+# name, odds band, max legs per competition, selection style.
+# No cap on legs per sport: with a 15-leg Flexi ticket the sport mix falls out of
+# whatever is actually kicking off, and a football-heavy day should produce a
+# football-heavy ticket.
 TICKET_PLANS = [
-    ("Ticket A · bankers",  (1.50, 1.62), 2, 8, "confidence"),
-    ("Ticket B · balanced", (1.55, 1.80), 2, 7, "mixed"),
-    ("Ticket C · value",    (1.65, 2.10), 2, 6, "odds"),
+    ("Ticket A · bankers",  (1.50, 1.62), 2, "confidence"),
+    ("Ticket B · balanced", (1.52, 1.72), 2, "mixed"),
+    ("Ticket C · value",    (1.55, 1.85), 2, "odds"),
 ]
+
+MIN_LEG_ODDS = 1.50          # a shorter leg only dilutes the ticket
+COMP_CAP_LADDER = (2, 3, 5, 999)   # relaxed only to reach the minimum
 
 
 def load_pools() -> list[dict]:
@@ -113,60 +119,87 @@ def ticket_outcomes(legs: list[dict], max_losses: int) -> dict:
 
 
 def build(pool: list[dict], window: float, size: int, tickets: int,
-          max_losses: int, now: float) -> list[dict]:
+          max_losses: int, now: float, min_size: int = 15,
+          max_per_match: int = 2) -> list[dict]:
+    """Three independent tickets, each filled to at least `min_size` legs.
+
+    Step 1: every match that kicks off inside the window is scored and dealt out to
+    the three tickets in rounds, so all of them get a fair share of the day's card.
+    Step 2: each ticket fills its legs from the matches it was dealt - the best
+            selection per match first, then a second selection from a match it holds
+            if it still needs legs. One team per ticket, one selection per pool.
+
+    Relaxation when a band is empty: the per-competition cap, then the odds band,
+    then the band entirely - never below MIN_LEG_ODDS.
+    """
     fresh = [s for s in pool if within_window(s, now, window)]
     by_fixture: dict[str, list[dict]] = {}
     for sel in fresh:
         # key on the actual match, not the streak id: the two sides of one game
-        # arrive as separate selections and must never share a ticket
+        # arrive as separate selections
         pair = "|".join(sorted([sel.get("team", ""), sel.get("opponent", "")]))
         by_fixture.setdefault(f"{sel['sport']}:{pair}:{sel.get('ts')}", []).append(sel)
     if not by_fixture:
         return []
 
     day = datetime.now(WAT).strftime("%Y-%m-%d")
-    used: set[tuple] = set()
-    used_types: set[tuple] = set()
-    used_matches: set[str] = set()          # a match belongs to one ticket only
-    out = []
-    for ti, (name, (lo, hi), cap_comp, cap_sport, style) in enumerate(TICKET_PLANS[:tickets]):
-        picks = []
-        for mkey, group in by_fixture.items():
-            if mkey in used_matches:
-                continue                    # already on an earlier ticket
-            band = [x for x in group
-                    if lo <= x["odds"] <= hi
-                    and (x["sport"], x["team"]) not in used
-                    and (x["sport"], x["team"], x["type"]) not in used_types]
-            if not band:
-                continue
-            if style == "odds":
-                band.sort(key=lambda x: (-x["odds"], -x["confidence"]))
-            else:
-                band.sort(key=lambda x: (-x["confidence"], x["ts"]))
-            picks.append((mkey, band[0]))
-        if style == "mixed":
-            # rotate sports so the ticket is genuinely diversified
-            picks.sort(key=lambda x: (x[1]["sport"], -x[1]["confidence"]))
-        else:
-            picks.sort(key=lambda x: (-x[1]["confidence"], x[1]["ts"]))
+    plans = TICKET_PLANS[:tickets]
 
-        legs, comps, sports, seen_teams = [], {}, {}, set()
-        for mkey, sel in picks:
-            if len(legs) >= size:
-                break
+    def leg_rank(plan, sel, cap=9999, comps=None, teams=None):
+        """Lower is better. In-band legs beat out-of-band ones, then the plan's style."""
+        _name, (lo, hi), _c, style = plan
+        in_band = lo <= sel["odds"] <= hi
+        if style == "odds":
+            return (0 if in_band else 1, -sel["odds"], -sel["confidence"])
+        if style == "mixed":
+            return (0 if in_band else 1, sel["sport"], -sel["confidence"])
+        return (0 if in_band else 1, -sel["confidence"], sel["ts"])
+
+    # ---- step 1: deal matches, round by round, so no ticket is starved
+    dealt: dict[int, list[str]] = {i: [] for i in range(len(plans))}
+    remaining = list(by_fixture)
+    while remaining:
+        progressed = False
+        for ti, plan in enumerate(plans):
+            best = None
+            for mkey in remaining:
+                group = [x for x in by_fixture[mkey] if x["odds"] >= MIN_LEG_ODDS]
+                if not group:
+                    continue
+                pick = min(group, key=lambda x: leg_rank(plan, x))
+                key = leg_rank(plan, pick)
+                if best is None or key < best[0]:
+                    best = (key, mkey)
+            if best is None:
+                continue
+            dealt[ti].append(best[1])
+            remaining.remove(best[1])
+            progressed = True
+        if not progressed:
+            break
+
+    used_types: set[tuple] = set()      # one selection lives in one ticket
+    global_used: dict[str, int] = {}     # legs taken from a match, across tickets
+    out = []
+    for ti, plan in enumerate(plans):
+        _name, (lo, hi), _c, style = plan
+        legs: list[dict] = []
+        comps: dict[str, int] = {}
+        sports: dict[str, int] = {}
+        teams: set[tuple] = set()
+        per_match: dict[str, int] = {}
+
+        def add(mkey, sel):
             sp, lg = sel["sport"], sel.get("league") or ""
-            if comps.get(lg, 0) >= cap_comp or sports.get(sp, 0) >= cap_sport:
-                continue
-            if (sp, sel["team"]) in seen_teams:      # no team twice inside one ticket
-                continue
+            per_match[mkey] = per_match.get(mkey, 0) + 1
+            global_used[mkey] = global_used.get(mkey, 0) + 1
             comps[lg] = comps.get(lg, 0) + 1
             sports[sp] = sports.get(sp, 0) + 1
-            seen_teams.add((sp, sel["team"]))
+            teams.add((sp, sel["team"]))
             used_types.add((sp, sel["team"], sel["type"]))
-            used_matches.add(mkey)
             when = datetime.fromtimestamp(sel["ts"], WAT)
             legs.append({
+                "sameMatch": per_match[mkey] > 1,
                 "sport": sp, "sportLabel": SPORT_LABEL.get(sp, sp),
                 "league": lg, "headline": sel.get("headline", ""),
                 "team": sel.get("team", ""), "opponent": sel.get("opponent", ""),
@@ -177,21 +210,99 @@ def build(pool: list[dict], window: float, size: int, tickets: int,
                 "ts": sel["ts"], "date": sel.get("date"),
                 "kickoff": when.strftime("%a %d %b · %H:%M"),
             })
+
+        def eligible(mkey, band_lo, band_hi, cap):
+            got = []
+            for sel in by_fixture[mkey]:
+                sp = sel["sport"]
+                if not (band_lo <= sel["odds"] <= band_hi) or sel["odds"] < MIN_LEG_ODDS:
+                    continue
+                if (sp, sel["team"]) in teams:
+                    continue
+                if (sp, sel["team"], sel["type"]) in used_types:
+                    continue
+                if comps.get(sel.get("league") or "", 0) >= cap:
+                    continue
+                got.append(sel)
+            return got
+
+        # ---- step 2: one leg (then a second) from each match this ticket holds
+        my_matches = list(dealt[ti])
+        for _pass in range(size):
+            if len(legs) >= size:
+                break
+            progressed = False
+            for mkey in my_matches:
+                if len(legs) >= size:
+                    break
+                if per_match.get(mkey, 0) >= max_per_match:
+                    continue
+                if per_match.get(mkey, 0) == 0 and len(legs) >= 1 and False:
+                    continue
+                got = []
+                for cap in COMP_CAP_LADDER:
+                    got = eligible(mkey, lo, hi, cap)
+                    if got:
+                        break
+                if not got:
+                    for cap in COMP_CAP_LADDER[:2]:
+                        got = eligible(mkey, MIN_LEG_ODDS, max(hi + 0.35, 2.5), cap)
+                        if got:
+                            break
+                if not got:
+                    got = eligible(mkey, MIN_LEG_ODDS, 99.0, COMP_CAP_LADDER[0])
+                if not got:
+                    # before taking a second leg, let every other match have its first
+                    if per_match.get(mkey, 0) >= 1:
+                        continue
+                    got = eligible(mkey, MIN_LEG_ODDS, 99.0, 9999)
+                if not got:
+                    continue
+                best = min(got, key=lambda x: leg_rank(plan, x))
+                add(mkey, best)
+                progressed = True
+            if not progressed:
+                break
+
+        # ---- step 3: borrow more of the day's card if the ticket is still short.
+        # The matches were dealt out in step 1, so a second leg often has to come
+        # from a match another ticket already holds - never more than max_per_match
+        # legs per match in total, so two tickets never share the same fixture twice.
+        if len(legs) < min_size:
+            def borrow_rank(mkey):
+                # own matches first, then whatever has the fewest legs taken
+                return (0 if mkey in my_matches else 1, global_used.get(mkey, 0))
+            for mkey in sorted(by_fixture, key=borrow_rank):
+                if len(legs) >= min_size:
+                    break
+                if global_used.get(mkey, 0) >= max_per_match:
+                    continue
+                got = eligible(mkey, lo, hi, 9999)
+                if not got:
+                    got = eligible(mkey, MIN_LEG_ODDS, 99.0, 9999)
+                if not got:
+                    continue
+                add(mkey, min(got, key=lambda x: leg_rank(plan, x)))
+                if mkey in remaining:
+                    remaining.remove(mkey)
+
         if not legs:
             continue
-        for l in legs:
-            used.add((l["sport"], l["team"]))      # no team on two tickets either
         legs.sort(key=lambda l: l["ts"])
         out.append({
             "id": f"{day}-T{ti + 1}",
-            "name": name,
+            "name": _name,
             "windowHours": window,
+            "minLegs": min_size,
+            "meetsMinimum": len(legs) >= min_size,
+            "distinctMatches": len(per_match),
+            "sharedLegs": sum(1 for l in legs if l.get("sameMatch")),
             "flexi": flexi_maths(legs, max_losses),
             "outcomes": ticket_outcomes(legs, max_losses),
-            "sports": sorted(sports, key=lambda s: -sports[s]),
+            "sports": sorted(sports, key=lambda x: -sports[x]),
             "sportBreakdown": {SPORT_LABEL.get(k, k): v for k, v in
                                sorted(sports.items(), key=lambda x: -x[1])},
-            "leagues": sorted(comps, key=lambda k: -comps[k]),
+            "leagues": sorted(comps, key=lambda x: -comps[x]),
             "legs": legs,
         })
     return out
@@ -201,6 +312,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--window", type=float, default=24.0, help="hours until the last leg kicks off")
     ap.add_argument("--size", type=int, default=16, help="maximum legs per ticket")
+    ap.add_argument("--min-size", type=int, default=15,
+                    help="minimum legs per ticket (SportyBet Flexi needs the full slip)")
+    ap.add_argument("--max-per-match", type=int, default=2,
+                    help="most legs one match may contribute to a single ticket")
     ap.add_argument("--tickets", type=int, default=3)
     ap.add_argument("--max-losses", type=int, default=5)
     args = ap.parse_args()
@@ -216,24 +331,33 @@ def main() -> int:
     window_pool = [s for s in pool if within_window(s, now, args.window)]
     print(f"[tickets] inside the next {args.window:g}h: {len(window_pool)} selections")
 
-    tickets = build(pool, args.window, args.size, args.tickets, args.max_losses, now)
+    tickets = build(pool, args.window, args.size, args.tickets, args.max_losses, now,
+                    min_size=args.min_size, max_per_match=args.max_per_match)
     for t in tickets:
         f, o = t["flexi"], t["outcomes"]
-        print(f"[tickets] {t['name']}: {f['legs']} legs · odds {f['minLegOdds']}-{f['maxLegOdds']} "
-              f"· total {f['totalOdds']:,} · return chance {o['anyReturnPct']}% "
-              f"· {', '.join(f'{k} {v}' for k, v in t['sportBreakdown'].items())}")
+        flag = "" if t["meetsMinimum"] else "  << below the Flexi minimum"
+        print(f"[tickets] {t['name']}: {f['legs']} legs from {t['distinctMatches']} matches "
+              f"· odds {f['minLegOdds']}-{f['maxLegOdds']} · total {f['totalOdds']:,} "
+              f"· return chance {o['anyReturnPct']}% "
+              f"· {', '.join(f'{k} {v}' for k, v in t['sportBreakdown'].items())}{flag}")
 
     payload = {
         "generatedAt": datetime.now(WAT).isoformat(timespec="seconds"),
         "windowHours": args.window,
         "maxLosses": args.max_losses,
+        "minLegs": args.min_size,
+        "maxLegs": args.size,
+        "matchesInWindow": len({("|".join(sorted([s.get("team", ""), s.get("opponent", "")])),
+                                 s.get("ts")) for s in window_pool}),
         "poolSize": len(pool),
         "poolBySport": per_sport,
         "poolInWindow": len(window_pool),
         "tickets": tickets,
-        "note": ("Every leg kicks off inside the next 24 hours so the stake can roll over "
-                 "the same day. Prices are model estimates: only take a leg if the book's "
-                 "price is at or above its break-even, otherwise skip it."),
+        "note": (f"Each ticket is filled to at least {args.min_size} legs so the full slip can "
+                 f"go on SportyBet's Flexi option. Every leg kicks off inside the next "
+                 f"{args.window:g} hours, no match or team is used twice, and the tickets do not "
+                 f"share legs. Prices are model estimates: only take a leg if the book's price is "
+                 f"at or above its break-even, otherwise skip it."),
     }
     os.makedirs(DATA, exist_ok=True)
     with open(os.path.join(DATA, "tickets.json"), "w", encoding="utf-8") as fh:
