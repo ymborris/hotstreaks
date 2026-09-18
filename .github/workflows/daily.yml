@@ -88,8 +88,11 @@ jobs:
             --horizon-days 430
 
       - name: Build the day's tickets
+        # --min-size 15 is the floor: SportyBet's Flexi option wants 15 legs or
+        # more, and the three tickets are each filled to at least that many legs.
         run: |
-          python3 scripts/tickets.py --window 24 --size 16 --tickets 3 --max-losses 5
+          python3 scripts/tickets.py --window 24 --size 16 --min-size 15 \
+            --tickets 3 --max-per-match 2 --max-losses 5
 
       - name: Sanity-check the output
         run: |
@@ -112,6 +115,11 @@ jobs:
                   print(f"  {t['name']:22} {t['flexi']['legs']:2} legs · "
                         f"odds {t['flexi']['totalOdds']:,} · {mix}")
                   assert t["flexi"]["allLegsAboveFloor"], "a leg fell below 1.50"
+                  # 15 legs is what the Flexi option needs - warn, never fail the
+                  # run, so a quiet day still commits the rest of the data
+                  if t["flexi"]["legs"] < t.get("minLegs", 15):
+                      print(f"  WARNING: {t['name']} has only {t['flexi']['legs']} legs "
+                            f"(Flexi minimum {t.get('minLegs', 15)}) - the page flags it")
               if tk["tickets"]:
                   assert tk["poolInWindow"] > 0, "no selections inside the 24h window"
           if os.path.exists("data/sports.json"):
