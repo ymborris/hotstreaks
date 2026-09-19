@@ -42,10 +42,42 @@ already has and only re-fetches the last few days).
 
 | Tab | What it shows |
 |---|---|
-| **Streaks** | Everything as before, plus a **kickoff window** selector: next 1 / 3 / 6 / 12 hours, 1 / 3 / 7 / 30 days. With a window active the list sorts by soonest kickoff. The league strip under the sport buttons shows each league's bread and butter — runs, last played, next fixture. |
+| **Streaks** | Everything as before, plus a **kickoff window** selector: next 1 / 3 / 6 / 12 hours, 1 / 3 / 7 / 30 days. With a window active the list sorts by soonest kickoff. The league strip under the sport buttons shows each league's bread and butter — runs, last played, next fixture. **Sort it your way** with the buttons above the list: *Kickoff*, *Longest*, *Most runs* (the team with the most active runs first), *Likely* (highest modelled chance of the run continuing) or *Team*. The Consistency tab carries its own sort menu: *Best 10/10 first*, *Streak*, *Likely*, *Kickoff*, *Team*. |
+| **Consistency · 8 of 10** | The second question, asked separately from streaks: which selections landed in **at least 8 of the last 10 games**? A team that won 8 of 10 and then lost twice is here and not in Streaks; a team on a 3-game run that has only hit 3 times in ten is in Streaks and not here. Every market is analysed. Where a team has fewer than ten games on file, the card prints the real denominator (9/9, 8/8) rather than pretending it has ten. |
 | **Power rankings** | The runs most likely to continue, weighted towards the strongest competitions (top-5 leagues plus a few more). Shows modelled confidence and the **break-even odds**. |
 | **High odds** | Long-running selections the market should price generously (2.20+). Treat as value, not bankers. |
 | **Accumulators** | Three tickets that draw on **every** sport, each one built to **at least 15 legs** so SportyBet's **Flexi** option is available. Every leg kicks off within 24 hours, every leg is priced 1.50+, a team never appears twice on a ticket, and no selection is shared between tickets. The card shows legs / matches, the Flexi return arithmetic and a badge saying whether the Flexi minimum is met. |
+
+### Streak vs consistency, and the star
+
+Two different questions, two lists, one star:
+
+| | **Streaks** | **Consistency · 8 of 10** |
+|---|---|---|
+| Question | Is the run *alive right now*? | Did it *keep landing* across the last ten games? |
+| Qualifies | The run is still going, minimum 3 games | At least 8 hits in the last (up to) 10 games |
+| Won 8 of 10, then lost twice | ✗ | ✓ |
+| Three straight wins inside ten games | ✓ | ✗ (only 3 hits) |
+| Starred | The selection also has an 8-in-10 record | The selection is also on a live streak |
+
+A **★** next to a team means both lists carry it — a live streak *and* an 8-in-10 hit
+rate. It is drawn in both lists so the double-qualifiers can be spotted at a glance.
+One consequence is worth knowing: a 10/10 record *always* implies a live streak of at
+least ten, so the very top of the Consistency list is nearly all starred. The entries
+that are consistent **without** a live streak are the 9/10 and 8/10 ones whose run has
+just broken — the *Streak* sort (or the *Minimum live streak* slider, set to 0) is the
+fastest way to see them on their own.
+
+**How the list is capped.** Both builders keep the list readable instead of endless:
+at most **900** football selections and **260 per other sport**, at most **8** per team
+(football) or **6** (other sports), and inside that cap a **70% starred / 30% unstarred**
+split — otherwise a pure "best first" cut would hide every streak-broken 8-in-10 behind
+rows of 10/10s.
+
+**"Likely" is a model number, not a promise.** Each entry carries the same model price
+the ticket builder uses (`confidence` = modelled probability in percent, with the
+break-even odds alongside), taken from the price book for that team and market. When a
+selection has no price, it sorts last and simply shows no percentage.
 
 ### How the daily tickets are built
 
@@ -249,8 +281,8 @@ CONCACAF Champions Cup are one line each the same way.
 | `scripts/tickets.py` | Merges every sport's priced selections into the day's three tickets (`data/tickets.json`). |
 | `data/tickets.json` | The three tickets the page renders. |
 | `data/selections_football.json`, `data/selections_sports.json` | The priced selection pools the ticket builder reads. |
-| `.github/workflows/daily.yml` | The nightly schedule, manual trigger, and the commit step. |
-| `data/streaks.json` | Output consumed by the page (rebuilt every run). |
+| `.github/workflows/daily.yml` | The nightly schedule, manual trigger, and the commit step. The sanity block now also refuses to deploy a bad consistency list: it checks `statsCount` matches the rows, that every row is 8-of-10-or-better (`hits >= 8`, `hits <= games <= 10`), that each sport reported its own list, and it warns (without failing) when the list is thinner than expected. |
+| `data/streaks.json` | Output consumed by the page (rebuilt every run). Carries `streaks` (the runs) and `stats` (`statsCount` entries = the 8-of-10 list, each with `hits`, `games`, `recent`, `streak` and the model `confidence`). Every streak row also carries `confidence`, `fairOdds` and `record`, and `teamId` so the two lists can be matched exactly. |
 | `data/history/*.jsonl` | Match archive, one JSON object per match, one file per season. |
 | `data/state.json` | Backfill cursor, last run time, pending-stats counter. |
 | `data/venue_cache.json` | Stadium names for upcoming fixtures (avoids re-fetching). |
