@@ -285,7 +285,17 @@ input[type="range"] { width: 100%; accent-color: var(--hot); }
   .lgstrip .lg.live .dot { background: var(--good); box-shadow: 0 0 6px rgba(62, 224, 160, .6); }
   .lgstrip .lgmore { color: var(--today); border-style: dashed; cursor: pointer; font-weight: 600; }
   /* the consistency section and the "both criteria" star */
-  .star { color: #ffd166; text-shadow: 0 0 8px rgba(255, 209, 102, .55); font-size: 13px; }
+  .star {
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; line-height: 1; color: #ffd166; vertical-align: -3px;
+    text-shadow: 0 0 10px rgba(255, 209, 102, .85), 0 0 22px rgba(255, 176, 32, .45);
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, .6));
+    margin-left: 2px;
+  }
+  .star.sm { font-size: 16px; vertical-align: -2px; }
+  .recent-ticks { letter-spacing: 2px; white-space: nowrap; }
+  .recent-ticks .h { color: #4ade80; }
+  .recent-ticks .m { color: #f87171; }
   .card.both { border-color: rgba(255, 209, 102, .45); }
   .card .hitbar { display: flex; align-items: center; gap: 8px; margin: 2px 0 8px; }
   .card .hitbar .track { flex: 1; height: 6px; border-radius: 99px; background: var(--bg-elev-2); overflow: hidden; }
@@ -626,7 +636,7 @@ tr:hover td { background: #171b24; }
         <div>
           <h2 id="headline">Active betting runs</h2>
           <div class="sub" id="subtitle">Loading worldwide results…</div>
-          <div class="build" id="buildStamp">build v6 · 19 Sep 2026 · sortable streaks + Consistency (8 of 10) · Flexi tickets · all kickoffs WAT
+          <div class="build" id="buildStamp">build v6 · 19 Sep 2026 · sortable streaks · Consistency (8 of 10) · cards + tables · 15-leg Flexi tickets · all kickoffs WAT
             · <span id="tapProbe">tap test: waiting for a tap…</span></div>
         </div>
         <div class="controls">
@@ -701,6 +711,23 @@ tr:hover td { background: #171b24; }
           on file the card states the real denominator (9/9, 8/8) instead of pretending it has ten.
         </div>
         <div class="grid" id="statCards"></div>
+        <div class="table-wrap hidden" id="statTableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Hits</th>
+                <th>Team</th>
+                <th>Selection</th>
+                <th>Last 10</th>
+                <th>Live</th>
+                <th>Continue</th>
+                <th>Next match</th>
+                <th>When</th>
+              </tr>
+            </thead>
+            <tbody id="statTbody"></tbody>
+          </table>
+        </div>
         <div class="empty hidden" id="statEmpty">No selection has hit 8 of its last 10 games yet for this sport.</div>
         <button class="more hidden" id="moreStats">Show more</button>
       </section>
@@ -771,6 +798,7 @@ const state = {
   window: 0,          // kickoff window in hours (0 = any)
   sortStats: "hits",
   minStreak: 0,
+  viewStats: "cards",
   tab: "streaks",
   sport: "football",
   limit: PAGE,
@@ -914,6 +942,29 @@ function filteredStats() {
   return rows;
 }
 
+function renderStatsTable(rows) {
+  $("statTbody").innerHTML = rows
+    .map((s) => {
+      const n = nextBits(s.next);
+      const ticks = (s.recent || [])
+        .map((r) => `<span class="${r.hit ? "h" : "m"}">${r.hit ? "✓" : "✗"}</span>`)
+        .join("");
+      const conf = (typeof s.confidence === "number")
+        ? `${s.confidence.toFixed(0)}%` + (s.fairOdds ? ` · ${s.fairOdds}` : "") : "—";
+      return `<tr>
+        <td class="num">${s.hits}<span style="color:var(--muted)">/${s.games}</span></td>
+        <td><div class="team-cell">${crestHtml(s.badge, s.teamShort)}<div><b>${esc(pretty(s.team))}</b>${starHtml(s.alsoStreak, "Also on a live streak — both criteria", true)}<div style="color:var(--muted);font-size:11px">${esc(s.market || "")} · ${esc(s.league)}${s.country ? " · " + esc(s.country) : ""}</div></div></div></td>
+        <td>${esc(s.typeLabel)}</td>
+        <td class="recent-ticks">${ticks || "—"}</td>
+        <td>${s.streak ? s.streak : "—"}</td>
+        <td>${conf}</td>
+        <td>${esc(n.headline)}</td>
+        <td>${esc(s.next?.kickoffLabel || "—")}${s.next?.today ? " · TODAY" : ""}</td>
+      </tr>`;
+    })
+    .join("");
+}
+
 function renderStats() {
   const rows = filteredStats();
   const shown = rows.slice(0, state.limit);
@@ -923,7 +974,15 @@ function renderStats() {
   const more = $("moreStats");
   more.classList.toggle("hidden", shown.length >= rows.length);
   more.textContent = `Show more (${shown.length} of ${rows.length})`;
-  $("statCards").innerHTML = shown.map(renderStatCard).join("");
+  if (state.viewStats === "table") {
+    $("statCards").classList.add("hidden");
+    $("statTableWrap").classList.remove("hidden");
+    renderStatsTable(shown);
+  } else {
+    $("statCards").classList.remove("hidden");
+    $("statTableWrap").classList.add("hidden");
+    $("statCards").innerHTML = shown.map(renderStatCard).join("");
+  }
 }
 
 function visibleTypes() {
@@ -946,33 +1005,62 @@ function renderSortSeg() {
     `<button data-sort="${id}" class="${id === key ? "active" : ""}">${esc(label)}</button>`).join("");
 }
 
-function runCountsFor(team) {
-  // how many active runs a team has in the list on screen
-  const runs = state.data?.streaks || [];
-  if (!state._runCounts || state._runCountsTeam !== team) {
+function runCounts() {
+  // how many active runs each team has in the list on screen.
+  // Built once per dataset: the cache is keyed on the data itself, never on the
+  // team being asked about. Keying it on the team made the comparator rebuild
+  // the whole map on nearly every comparison, which froze football (13k runs)
+  // for over a minute. Never put an O(n) call back inside a comparator.
+  const runs = (state.data && state.data.streaks) || [];
+  if (!state._runCounts || state._runCountsRef !== runs) {
     const counts = {};
-    for (const r of runs) counts[r.team] = (counts[r.team] || 0) + 1;
+    for (let i = 0; i < runs.length; i++) {
+      const t = runs[i].team;
+      counts[t] = (counts[t] || 0) + 1;
+    }
     state._runCounts = counts;
-    state._runCountsTeam = team;
+    state._runCountsRef = runs;
   }
-  return state._runCounts[team] || 0;
+  return state._runCounts;
 }
 
 function sortRuns(rows) {
+  // Decorate-sort-undecorate: every key a row needs is read ONCE, then the
+  // sort itself only compares plain numbers and strings. At 13k runs this is
+  // the difference between ~15 ms and a frozen tab.
   const key = state.sort;
-  const ts = (s) => (s.next && typeof s.next.ts === "number") ? s.next.ts : 9e15;
-  const conf = (s) => (typeof s.confidence === "number" ? s.confidence : -1);
-  const copy = rows.slice();
-  copy.sort((a, b) => {
-    if (key === "team") return a.team.localeCompare(b.team) || b.length - a.length;
-    if (key === "kickoff") return ts(a) - ts(b) || b.length - a.length;
-    if (key === "likely") return conf(b) - conf(a) || b.length - a.length || ts(a) - ts(b);
-    if (key === "runs") return runCountsFor(b.team) - runCountsFor(a.team) || b.length - a.length
-                            || ts(a) - ts(b);
-    if (state.window > 0) return ts(a) - ts(b) || b.length - a.length;   // legacy window sort
-    return b.length - a.length || a.team.localeCompare(b.team);
-  });
-  return copy;
+  const counts = key === "runs" ? runCounts() : null;
+  const dec = new Array(rows.length);
+  for (let i = 0; i < rows.length; i++) {
+    const s = rows[i];
+    const nxt = s.next;
+    dec[i] = {
+      s,
+      ts: (nxt && typeof nxt.ts === "number") ? nxt.ts : 9e15,
+      conf: (typeof s.confidence === "number") ? s.confidence : -1,
+      len: s.length || 0,
+      runs: counts ? (counts[s.team] || 0) : 0,
+      name: String(s.team || "").toLowerCase(),
+    };
+  }
+  const byName = (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  const byTs = (a, b) => a.ts - b.ts || b.len - a.len;
+  if (key === "team") {
+    dec.sort((a, b) => byName(a, b) || b.len - a.len);
+  } else if (key === "kickoff") {
+    dec.sort(byTs);
+  } else if (key === "likely") {
+    dec.sort((a, b) => b.conf - a.conf || b.len - a.len || a.ts - b.ts);
+  } else if (key === "runs") {
+    dec.sort((a, b) => b.runs - a.runs || b.len - a.len || a.ts - b.ts);
+  } else if (state.window > 0) {
+    dec.sort(byTs);                     // a kickoff window pins the list to soonest-first
+  } else {
+    dec.sort((a, b) => b.len - a.len || byName(a, b));
+  }
+  const out = new Array(dec.length);
+  for (let i = 0; i < dec.length; i++) out[i] = dec[i].s;
+  return out;
 }
 
 function applyStars(data) {
@@ -1049,8 +1137,10 @@ function renderChips() {
   };
 }
 
-function starHtml(flag, why) {
-  return flag ? `<span class="star" title="${esc(why)}">★</span>` : "";
+function starHtml(flag, why, small) {
+  return flag
+    ? `<span class="star${small ? " sm" : ""}" title="${esc(why)}" aria-label="both criteria">★</span>`
+    : "";
 }
 
 function renderStatCard(s) {
@@ -1135,7 +1225,7 @@ function renderTable(rows) {
       const n = nextBits(s.next);
       return `<tr>
         <td class="num">${s.length}</td>
-        <td><div class="team-cell">${crestHtml(s.badge, s.teamShort)}<div><b>${esc(pretty(s.team))}</b><div style="color:var(--muted);font-size:11px">${esc(s.market || "")} · ${esc(s.league)}</div></div></div></td>
+        <td><div class="team-cell">${crestHtml(s.badge, s.teamShort)}<div><b>${esc(pretty(s.team))}</b>${starHtml(s.alsoStats, "Also 8+ of its last 10 games — see the Consistency tab", true)}<div style="color:var(--muted);font-size:11px">${esc(s.market || "")} · ${esc(s.league)}</div></div></div></td>
         <td>${esc(s.typeLabel)}</td>
         <td class="form">${formHtml(s.form)}</td>
         <td>${esc(n.headline)}</td>
@@ -1163,6 +1253,18 @@ function render() {
     $("tableWrap").classList.remove("hidden");
     renderTable(shown);
   }
+}
+
+function renderActiveList() {
+  if (state.tab === "stats") renderStats(); else render();
+}
+
+function syncViewSeg() {
+  const listTab = state.tab === "streaks" || state.tab === "stats";
+  const seg = $("viewSeg");
+  seg.classList.toggle("hidden", !listTab);
+  const on = state.tab === "stats" ? state.viewStats : state.view;
+  [...seg.children].forEach((x) => x.classList.toggle("active", x.dataset.view === on));
 }
 
 function syncLengthControl() {
@@ -1237,7 +1339,7 @@ function bind() {
     const listTab = state.tab === "streaks" || state.tab === "stats";
     renderSortSeg();
     $("sortSeg").classList.toggle("hidden", !listTab);
-    $("viewSeg").classList.toggle("hidden", state.tab !== "streaks");
+    syncViewSeg();
     $("kickoff").classList.toggle("hidden", !listTab);
     if (state.tab === "streaks") render();
     else if (state.tab === "stats") renderStats();
@@ -1258,9 +1360,14 @@ function bind() {
   $("viewSeg").addEventListener("click", (e) => {
     const b = e.target.closest("button");
     if (!b) return;
-    state.view = b.dataset.view;
-    [...$("viewSeg").children].forEach((x) => x.classList.toggle("active", x === b));
-    render();
+    if (state.tab === "stats") {
+      state.viewStats = b.dataset.view;
+      renderStats();
+    } else {
+      state.view = b.dataset.view;
+      render();
+    }
+    syncViewSeg();
   });
   $("more").addEventListener("click", () => {
     state.limit += PAGE;
@@ -1551,7 +1658,7 @@ async function selectSport(key) {
     $("subtitle").textContent = `${footballData.streakCount} runs · ${footballData.teamCount} teams · ${footballData.eventCount} matches · as of ${footballData.asOf} · kickoffs WAT`;
     fillLeagues(footballData.leagues);
     renderChips();
-    render();
+    renderActiveList();
     return;
   }
 
@@ -1581,7 +1688,7 @@ async function selectSport(key) {
     `${SPORT_META[key]?.name || key} (${SPORT_META[key]?.note || ""}) · ${sec.streakCount} runs · ${sec.teamCount} teams · ${sec.eventCount} games · as of ${sec.asOf} · kickoffs WAT`;
   fillLeagues(sec.leagues);
   renderChips();
-  render();
+  renderActiveList();
 }
 
 async function loadData() {
