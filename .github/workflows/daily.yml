@@ -115,6 +115,13 @@ jobs:
                   print(f"  {t['name']:22} {t['flexi']['legs']:2} legs · "
                         f"odds {t['flexi']['totalOdds']:,} · {mix}")
                   assert t["flexi"]["allLegsAboveFloor"], "a leg fell below 1.50"
+                  # SportyBet refuses stat markets on a Flexi slip: no ticket leg
+                  # may come from one (fouls, throw-ins, tackles, match shots, ...)
+                  blocked = {"fouls", "throws", "tackles", "shots", "other"}
+                  bad = [l["typeLabel"] for l in t["legs"]
+                         if (l.get("market") or "") in blocked
+                         and l.get("type") not in ("team_sot_o45", "team_sot_o35")]
+                  assert not bad, f"{t['name']} uses a market SportyBet blocks on Flexi: {bad}"
                   # 15 legs is what the Flexi option needs - warn, never fail the
                   # run, so a quiet day still commits the rest of the data
                   if t["flexi"]["legs"] < t.get("minLegs", 15):
