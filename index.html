@@ -699,7 +699,10 @@ tr:hover td { background: #171b24; }
           Three independent tickets built from every sport's streak model. A ticket takes the
           strongest legs available, so it may mix sports — or end up all football, all basketball,
           whatever the runs say that day. Every ticket carries <b>at least 15 legs</b>, the minimum
-          SportyBet's <b>Flexi</b> option wants, with <b>max 5 losses</b> as the insurance line; no
+          SportyBet's <b>Flexi</b> option wants, with <b>max 5 losses</b> as the insurance line. Only
+          markets SportyBet accepts on a Flexi slip are used — favourites/1X2, over–under goals,
+          both teams to score, corners, bookings, shots on target and handicaps — so the stat markets
+          it blocks (match shots, throw-ins, fouls, tackles, offsides) never appear. No
           team appears twice on one ticket and the day's matches are shared out between the three
           tickets, so they do not cannibalise each other (a second leg from the same match is marked
           in the table when it is needed to reach 15). <b>Every leg kicks off inside the next 24
@@ -709,6 +712,7 @@ tr:hover td { background: #171b24; }
           keeps the ticket value-positive. The Flexi figures are arithmetic on the modelled prices,
           not SportyBet's internal split, so check their calculator before staking.
         </div>
+        <div class="note" id="marketNote" style="display:none"></div>
         <div id="accaList"></div>
       </section>
 
@@ -1115,6 +1119,16 @@ function renderHighOdds(rows) {
 function renderCrossSportTickets(payload) {
   const tickets = payload.tickets || [];
   if (!tickets.length) return false;
+  const mn = $("marketNote");
+  if (mn && payload.excludedMarkets) {
+    const keys = Object.keys(payload.excludedMarkets);
+    const total = keys.reduce((n, k) => n + payload.excludedMarkets[k], 0);
+    if (total) {
+      const top = keys.slice(0, 5).map((k) => `${esc(k.split("/")[1] || k)} ${payload.excludedMarkets[k]}`).join(" · ");
+      mn.textContent = `${payload.marketPolicy || ""} Skipped today: ${total} selections (${top}).`;
+      mn.style.display = "";
+    }
+  }
   $("accaList").innerHTML = tickets.map((t) => {
     const f = t.flexi || {}, o = t.outcomes || {};
     const mix = Object.entries(t.sportBreakdown || {})
@@ -1141,6 +1155,7 @@ function renderCrossSportTickets(payload) {
       <div class="sub">${legCount} legs from ${t.distinctMatches || "?"} matches${t.sharedLegs ? ` (${t.sharedLegs} second leg${t.sharedLegs > 1 ? "s" : ""} from a match already on this ticket)` : ""} · ${mix} · generated ${esc(payload.generatedAt || "")} · kickoffs WAT</div>
       <div class="kv">
         <div><b>${legCount} / ${minLegs}</b><span>legs (SportyBet Flexi minimum)</span></div>
+        <div><b>Flexi-safe</b><span>${esc((payload.marketPolicy || "handicaps, goals, BTTS, corners, bookings, shots on target").split(":")[0])}</span></div>
         <div><b>${f.totalOdds}</b><span>total odds (all legs)</span></div>
         <div><b>${o.anyReturnPct}%</b><span>chance of a Flexi return at max ${payload.maxLosses} losses</span></div>
         <div><b>${f.worstCaseOdds}</b><span>return if exactly ${payload.maxLosses} legs lose</span></div>
