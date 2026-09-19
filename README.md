@@ -65,13 +65,20 @@ already has and only re-fetches the last few days).
    from each of its matches, and a **second leg from a match it already holds**
    when it still needs legs. A second leg is always marked in the table, is capped
    at two per match, and never happens at another ticket's expense.
-4. **Leg bands.** Ticket A takes 1.50–1.62 (bankers), B 1.52–1.72 (balanced),
+4. **Flexi-legal markets only.** SportyBet will not take stat markets on a Flexi
+   slip, so every leg has to come from a market it does accept: favourites / 1X2,
+   over-under goals, both teams to score, corners, bookings, shots on target and
+   handicaps. Match shots, throw-ins, fouls, tackles, offsides, keeper saves and
+   possession are excluded before the tickets are built — the run prints how many
+   selections that dropped. The rest of the site (streaks, rankings, high odds)
+   still tracks every market; the restriction applies to the tickets only.
+5. **Leg bands.** Ticket A takes 1.50–1.62 (bankers), B 1.52–1.72 (balanced),
    C 1.55–1.85 (value). Nothing below 1.50, since a shorter leg just dilutes a
    15-leg ticket. If a band runs dry the builder widens it, then drops the
    per-competition cap, then takes anything above the 1.50 floor.
-5. **Independence.** No team twice on one ticket and no selection on two tickets —
+6. **Independence.** No team twice on one ticket and no selection on two tickets —
    a bad result can only hurt one ticket.
-6. **Flexi arithmetic.** Expect around three to five losing legs on a 15-leg
+7. **Flexi arithmetic.** Expect around three to five losing legs on a 15-leg
    ticket; the "return if exactly 5 lose" figure is what the ticket pays in that
    case, and "chance of a Flexi return at max 5 losses" is the modelled probability
    that at least one combination comes back.
@@ -167,7 +174,7 @@ To add another competition or sport, add an entry to `SOURCE` / `TYPES` in
 
 ### What is tracked
 
-46 domestic competitions plus the three UEFA club competitions:
+65 domestic competitions plus the three UEFA club competitions:
 
 | Competition | Source ids | Notes |
 |---|---|---|
@@ -189,6 +196,29 @@ To add another competition or sport, add an entry to `SOURCE` / `TYPES` in
 | Belarusian Premier League | 263 | |
 | Cymru Premier (Wales) | 116 | |
 | NIFL Premiership (Northern Ireland) | 129 | |
+| Serbian Super Liga | 182 | |
+| Danish Superliga | 46 | country-qualified: Romania's top flight is also "Superliga" |
+| Czech First League | 122 | |
+| Saudi Pro League | 536 | |
+| Israeli Premier League | 127 | FotMob calls it Ligat ha'Al |
+| Persian Gulf Pro League (Iran) | 523 | |
+| Colombian Primera A | 274 | |
+| Premier Soccer League (South Africa) | 537 | |
+| UAE Pro League | 538 | |
+| Besta deildin (Iceland) | 215 | |
+| Erovnuli Liga (Georgia) | 439 | |
+| Kategoria Superiore (Albania) | 260 | |
+| Macedonian Prva Liga | 249 | country-qualified: Slovenia's is also "Prva Liga" |
+| Virsliga (Latvia) | 226 | |
+| Premium liiga (Estonia) | 248 | |
+| A Lyga (Lithuania) | 228 | |
+| Iraqi Stars League | 524 | |
+| Armenian Premier League | 118 | |
+| Faroese Premier League | 250 | |
+
+Kosovo is the one league that could not be added: FotMob's league index covers 94
+countries and Kosovo is not among them, so there is no Kosovar top flight to read
+from this source.
 
 European matches are stored as their **own** competitions, so they never bleed into
 a team's domestic runs — Arsenal has a "no-draw run" for the Premier League and a
