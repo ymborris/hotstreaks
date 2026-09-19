@@ -103,8 +103,23 @@ jobs:
                 f"{d['eventCount']} matches · as of {d['asOf']}")
           assert d["streakCount"] > 0, "no streaks produced"
           assert d["eventCount"] > 0, "no matches in history"
-          missing = [k for k in ("asOf","leagues","types","markets","streaks") if k not in d]
+          missing = [k for k in ("asOf","leagues","types","markets","streaks","stats") if k not in d]
           assert not missing, f"missing keys: {missing}"
+          st = d["stats"]
+          assert d["statsCount"] == len(st), "statsCount does not match the stats list"
+          bad = [e for e in st if e["hits"] < 8 or e["hits"] > e["games"] or e["games"] > 10]
+          assert not bad, f"{len(bad)} consistency entries break the 8-of-10 rule"
+          thin = [e for e in st if e["games"] < 10]
+          if thin:
+              print(f"  {len(thin)} entries use a shorter window than 10 games (blank record or "
+                    f"home-only runs) - the card prints the real denominator")
+          starred = sum(1 for e in st
+                        if any(s2["team"] == e["team"] and s2["league"] == e["league"]
+                               and s2["type"] == e["type"] for s2 in d["streaks"]))
+          print(f"consistency: {len(st)} entries (>=8 of the last 10) - "
+                f"{starred} also have a live streak")
+          if len(st) < 100:
+              print(f"  WARNING: only {len(st)} consistency entries - check the archive depth")
           import os
           if os.path.exists("data/tickets.json"):
               tk = json.load(open("data/tickets.json"))
@@ -133,7 +148,14 @@ jobs:
               sp = json.load(open("data/sports.json"))
               for key, sec in sp["sports"].items():
                   flag = "ok" if sec["available"] else "unavailable"
-                  print(f"  {key:12} {flag:12} {sec['league']:38} {sec['streakCount']} runs")
+                  cst = sec.get("stats", [])
+                  cbad = [e for e in cst
+                          if e["hits"] < 8 or e["hits"] > e["games"] or e["games"] > 10]
+                  assert not cbad, f"{key}: {len(cbad)} consistency entries break the 8-of-10 rule"
+                  print(f"  {key:12} {flag:12} {sec['league']:38} {sec['streakCount']} runs "
+                        f"· {len(cst)} consistent")
+                  if sec["available"] and not cst:
+                      print(f"  WARNING: {key} produced no consistency entries")
                   for lg in sec.get("leagueInfo", []):
                       nxt = (lg.get("nextGame") or "no fixtures yet")[:16]
                       print(f"      {lg['label']:12} {lg['games']:>5} games · "
