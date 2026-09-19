@@ -69,7 +69,18 @@ def east_to_utc_ts(day: str, clock: str) -> int:
 NFLVERSE = "https://raw.githubusercontent.com/nflverse/nfldata/master/data/games.csv"
 NFL_SEASONS = 3            # seasons of NFL history kept (one request covers all)
 MIN_STREAK = 3
-RECENT_N = 6
+RECENT_N = 6                            # run-detail lines per card
+STATS_LOOKBACK = 10                     # the consistency section: last 10 games
+STATS_MIN_GAMES = 8                     # at least 8 played
+STATS_MIN_HITS = 8                      # the stat landed in at least 8
+STATS_PER_SPORT = 260                   # entries shipped per sport
+STATS_PER_TEAM = 6                      # most entries one team may contribute
+
+# which markets the consistency section lists first: the slip-friendly ones lead,
+# the stat markets SportyBet blocks on Flexi come last
+MARKET_RANK = {"result": 0, "spread": 1, "total": 2, "scoring": 3, "defence": 4,
+               "sets": 3, "handicap": 1, "goals": 0, "corners": 2, "cards": 3,
+               "shots": 6, "fouls": 7, "throws": 8, "tackles": 9, "other": 10}
 FORM_N = 5
 FIXTURE_DAYS = 14          # forward window for each sport's upcoming games
 
@@ -976,6 +987,83 @@ def side_rows(games: list[dict], sport: str) -> dict[str, dict]:
     return teams
 
 
+def build_sport_stats(sport: str, games: list[dict], upcoming: dict[str, list[dict]],
+                       streak_keys: set, market_rank: dict[str, int]) -> list[dict]:
+    """The consistency section for one sport: 8+ hits in the last 10 games.
+
+    Streaks are consecutive; this is the hit rate. A team that won 8 of its last
+    10 - even with the last two lost - shows up here and not in the streaks list,
+    and a live 3-game run with only 3 hits in 10 shows up in streaks only.
+    Entries in both carry a star.
+    """
+    teams = side_rows(games, sport)
+    today = datetime.now(WAT).strftime("%Y-%m-%d")
+    out: list[dict] = []
+    for name, slot in teams.items():
+        rows = slot["rows"]
+        if len(rows) < STATS_MIN_GAMES:
+            continue
+        nxt = next_game(upcoming.get(name, []), name, today)
+        form = "".join(r["res"] for r in rows[-FORM_N:][::-1])
+        picked: list[dict] = []
+        for t in TYPES[sport]:
+            scope = t.get("scope", "any")
+            hits = seen = 0
+            run: list[tuple[dict, bool]] = []
+            for r in reversed(rows):
+                if scope == "home" and not r["home"]:
+                    continue
+                if scope == "away" and r["home"]:
+                    continue
+                seen += 1
+                hit = bool(t["pred"](r))
+                if hit:
+                    hits += 1
+                if len(run) < STATS_LOOKBACK:
+                    run.append((r, hit))
+                if seen >= STATS_LOOKBACK:
+                    break
+            if seen < STATS_MIN_GAMES or hits < STATS_MIN_HITS:
+                continue
+            streak_len = 0
+            for r in reversed(rows):
+                if scope == "home" and not r["home"]:
+                    continue
+                if scope == "away" and r["home"]:
+                    continue
+                if t["pred"](r):
+                    streak_len += 1
+                else:
+                    break
+            picked.append({
+                "id": f"{slug(name)}-{t['id']}-stats",
+                "team": name, "teamShort": slot["short"],
+                "league": slot["league"], "country": None,
+                "type": t["id"], "typeLabel": t["label"], "scope": scope,
+                "market": t["market"], "polarity": t["polarity"],
+                "hits": hits, "games": seen,
+                "pct": round(hits * 100.0 / seen, 1),
+                "streak": streak_len,
+                "alsoStreak": (name, t["id"]) in streak_keys,
+                "form": form,
+                "recent": [{"date": r["date"], "opp": r["opp"], "home": r["home"],
+                            "score": _score_fmt(r), "result": r["res"], "hit": hit,
+                            "stat": _safe(t["fmt"], r)} for r, hit in run],
+                "next": nxt, "matches": [],
+            })
+        picked.sort(key=lambda e: (-e["hits"], -e["pct"],
+                                   market_rank.get(e["market"], 9), e["typeLabel"]))
+        out.extend(picked[:STATS_PER_TEAM])
+
+    out.sort(key=lambda e: (-e["hits"], -e["pct"], market_rank.get(e["market"], 9), e["team"]))
+    starred = [e for e in out if e["alsoStreak"]]
+    plain = [e for e in out if not e["alsoStreak"]]
+    keep = starred[: int(STATS_PER_SPORT * 0.7)] + plain[: STATS_PER_SPORT - int(STATS_PER_SPORT * 0.7)]
+    keep.sort(key=lambda e: (-e["hits"], -e["pct"], 0 if e["alsoStreak"] else 1,
+                             market_rank.get(e["market"], 9), e["team"]))
+    return keep
+
+
 def build_sport_streaks(sport: str, games: list[dict], upcoming: dict[str, list[dict]]) -> list[dict]:
     teams = side_rows(games, sport)
     today = datetime.now(WAT).strftime("%Y-%m-%d")
@@ -1415,12 +1503,25 @@ def main() -> int:
 
             streaks = build_sport_streaks(sport, allgames, up)
             teams = len({g[side]["n"] for g in allgames for side in ("h", "a")})
+            stats_list: list[dict] = []
             if allgames:
                 baselines = sport_baselines(allgames, sport)
                 pricebook = price_sport(sport, allgames, baselines)
                 sells = sport_selections(sport, allgames, up, pricebook)
                 selections.extend(sells)
                 log(f"  {sport}: {len(sells)} priced selections inside 24h")
+                # the consistency section, plus the model's chance of it landing
+                # next time so the page can sort by likelihood
+                streak_keys = {(st["team"], st["type"]) for st in streaks}
+                stats_list = build_sport_stats(sport, allgames, up, streak_keys, MARKET_RANK)
+                for st in streaks + stats_list:
+                    pk = (pricebook.get(st["team"]) or {}).get(st["type"])
+                    if pk:
+                        st["confidence"] = round(pk["p"] * 100, 1)
+                        st["fairOdds"] = pk["fair"]
+                        st["record"] = pk.get("record") or f"{pk['hits']}/{pk['n']}"
+                log(f"  {sport}: {len(stats_list)} consistency entries "
+                    f"(8+ of the last 10 games)")
             as_of = max((g["date"] for g in allgames if g.get("date")), default=str(today))
             lgs = sorted({g.get("league") for g in allgames if g.get("league")})
             # per-league status: what the page needs to explain a quiet league
@@ -1467,6 +1568,8 @@ def main() -> int:
                            "polarity": t["polarity"]} for t in TYPES[sport]],
                 "markets": MARKETS[sport],
                 "streaks": streaks,
+                "stats": stats_list,
+                "statsCount": len(stats_list),
             }
             log(f"  {sport}: {len(streaks)} runs from {len(allgames)} games")
         except urllib.error.HTTPError as e:
@@ -1476,14 +1579,16 @@ def main() -> int:
                                  "reason": f"source returned HTTP {e.code} from this network",
                                  "streaks": [], "types": [], "markets": MARKETS[sport],
                                  "leagues": [], "asOf": None, "eventCount": 0,
-                                 "teamCount": 0, "streakCount": 0}
+                                 "teamCount": 0, "streakCount": 0,
+                                 "stats": [], "statsCount": 0}
         except Exception as e:
             log(f"  {sport}: failed ({type(e).__name__}: {str(e)[:60]})")
             sports_out[sport] = {"key": sport, "label": label, "league": league_label,
                                  "available": False, "reason": f"{type(e).__name__}",
                                  "streaks": [], "types": [], "markets": MARKETS[sport],
                                  "leagues": [], "asOf": None, "eventCount": 0,
-                                 "teamCount": 0, "streakCount": 0}
+                                 "teamCount": 0, "streakCount": 0,
+                                 "stats": [], "statsCount": 0}
 
     with open(os.path.join(DATA, "selections_sports.json"), "w", encoding="utf-8") as fh:
         json.dump({"generatedAt": datetime.now(WAT).isoformat(timespec="seconds"),

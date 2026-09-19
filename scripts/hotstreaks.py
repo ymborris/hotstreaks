@@ -53,6 +53,11 @@ WAT = timezone(timedelta(hours=1))      # dashboard shows kickoffs + "as of" in 
 DEFAULT_HORIZON = "2024-08-01"          # oldest date the backfill may reach
 MIN_STREAK = 3                          # matches — aligns with the dashboard's default filter
 RECENT_N = 6                            # run-detail lines per card
+STATS_LOOKBACK = 10                     # the consistency section looks at the last 10 games
+STATS_MIN_GAMES = 8                     # ...needs at least 8 of them played
+STATS_MIN_HITS = 8                      # ...and the stat landed in at least 8
+STATS_CAP = 900                         # entries shipped for football
+STATS_PER_TEAM = 8                      # most entries one team may contribute
 FORM_N = 5                              # form dots
 FIXTURE_DAYS = 25                       # forward window for "next match"
                                         # (European matchdays are ~3 weeks apart)
@@ -169,6 +174,11 @@ EXTRA_FIXTURE_IDS = {
 }
 
 LABEL_COUNTRY = {label: country for label, country, _ids in LEAGUES}
+
+# order the consistency section prefers: the markets that matter most on a slip
+# first, the stat markets SportyBet blocks on Flexi last
+MARKET_RANK = {"goals": 0, "handicap": 1, "corners": 2, "cards": 3, "shots": 4,
+               "fouls": 5, "throws": 6, "tackles": 7, "other": 8}
 
 MARKETS = [
     {"id": "goals", "label": "Goals / 1X2"},
@@ -853,6 +863,7 @@ def build_streaks(matches: dict[int, dict], fixtures_by_team: dict[int, list[dic
                 name = slot["name"]
                 out.append({
                     "id": f"{slug(name)}-{slug(league)}-{t['id']}",
+                    "teamId": tid,
                     "team": name,
                     "teamShort": short_code(name, slot["short"]),
                     "league": league,
@@ -873,6 +884,111 @@ def build_streaks(matches: dict[int, dict], fixtures_by_team: dict[int, list[dic
                 })
     out.sort(key=lambda s: (-s["length"], s["team"], s["type"]))
     return out
+
+
+def build_stats(teams: dict[int, dict], fixtures_by_team: dict[int, list[dict]],
+                streak_keys: set, market_rank: dict[str, int]) -> list[dict]:
+    """The consistency section: a stat that landed in 8+ of the last 10 games.
+
+    A run in `build_streaks` is *consecutive* - three straight wins qualifies, a
+    win-loss-win pattern does not. This is the other half of the picture: 8 wins
+    in the last 10 games qualifies even if the last two were lost, and a stat that
+    has landed 9 times in 10 qualifies however the sequence is ordered.
+
+    `streak_keys` are the (team, competition, type) triples that also hold a live
+    streak; those entries (and the matching streaks) carry a star in the UI.
+    """
+    today = datetime.now(WAT).strftime("%Y-%m-%d")
+    suffixes = load_venue_cache()
+    out: list[dict] = []
+
+    for tid, slot in teams.items():
+        rows = slot["rows"]
+        if len(rows) < STATS_MIN_GAMES:
+            continue
+        nxt = next_fixture(fixtures_by_team.get(tid, []), tid, today, suffixes)
+        by_competition: dict[str, list[dict]] = {}
+        for r in rows:
+            by_competition.setdefault(r["lg"], []).append(r)
+        picked: list[dict] = []
+
+        for league, comp_rows in by_competition.items():
+            if len(comp_rows) < STATS_MIN_GAMES:
+                continue
+            form = "".join(r["res"] for r in comp_rows[-FORM_N:][::-1])
+            for t in TYPES:
+                scope = t.get("scope", "any")
+                hits = seen = 0
+                run: list[dict] = []          # newest first, one entry per game counted
+                for r in reversed(comp_rows):
+                    if scope == "home" and not r["home"]:
+                        continue
+                    if scope == "away" and r["home"]:
+                        continue
+                    if row_missing(r, t):
+                        continue
+                    seen += 1
+                    hit = bool(t["pred"](r))
+                    if hit:
+                        hits += 1
+                    if len(run) < STATS_LOOKBACK:
+                        run.append((r, hit))
+                    if seen >= STATS_LOOKBACK:
+                        break
+                if seen < STATS_MIN_GAMES or hits < STATS_MIN_HITS:
+                    continue
+                # the live streak of the same type, so the card can show how the
+                # current sequence looks as well as the ten-game hit rate
+                streak_len = 0
+                for r in reversed(comp_rows):
+                    if scope == "home" and not r["home"]:
+                        continue
+                    if scope == "away" and r["home"]:
+                        continue
+                    if row_missing(r, t):
+                        break
+                    if t["pred"](r):
+                        streak_len += 1
+                    else:
+                        break
+                name = slot["name"]
+                picked.append({
+                    "id": f"{slug(name)}-{slug(league)}-{t['id']}-stats",
+                    "teamId": tid, "team": name,
+                    "teamShort": short_code(name, slot["short"]),
+                    "league": league,
+                    "country": comp_rows[-1].get("ctry") or LABEL_COUNTRY.get(league),
+                    "type": t["id"], "typeLabel": t["label"], "market": t["market"],
+                    "polarity": t["polarity"],
+                    "hits": hits, "games": seen,
+                    "pct": round(hits * 100.0 / seen, 1),
+                    "streak": streak_len,
+                    "alsoStreak": (name, league, t["id"]) in streak_keys,
+                    "form": form,
+                    "recent": [{
+                        "date": r["date"], "opp": r["opp"], "home": r["home"],
+                        "score": r["score"], "result": r["res"], "hit": hit,
+                        "stat": safe_fmt(t["fmt"], r),
+                    } for r, hit in run],
+                    "next": nxt,
+                    "matches": [],
+                })
+        # keep each team's strongest entries, so no one team floods the section
+        picked.sort(key=lambda e: (-e["hits"], -e["pct"], market_rank.get(e["market"], 9),
+                                   e["typeLabel"]))
+        out.extend(picked[:STATS_PER_TEAM])
+
+    out.sort(key=lambda e: (-e["hits"], -e["pct"],
+                            market_rank.get(e["market"], 9), e["team"]))
+    # show both flavours: teams whose current run also counts as a streak (starred)
+    # and teams that are consistent but whose run was just broken - the case the
+    # streaks section cannot show
+    starred = [e for e in out if e["alsoStreak"]]
+    plain = [e for e in out if not e["alsoStreak"]]
+    keep = starred[: int(STATS_CAP * 0.7)] + plain[: STATS_CAP - int(STATS_CAP * 0.7)]
+    keep.sort(key=lambda e: (-e["hits"], -e["pct"], 0 if e["alsoStreak"] else 1,
+                             market_rank.get(e["market"], 9), e["team"]))
+    return keep
 
 
 def safe_fmt(fmt, row) -> str:
@@ -1485,6 +1601,18 @@ def main() -> int:
     log("pricing selections (model odds)")
     baselines = build_baselines(have)
     pricebook = estimate(have, baselines)
+
+    # the consistency section: 8+ hits in the last 10 games, per competition
+    streak_keys = {(st["team"], st["league"], st["type"]) for st in streaks}
+    stats = build_stats(build_rows(have), fixtures_by_team, streak_keys, MARKET_RANK)
+    log(f"  {len(stats)} consistency entries (8+ of the last 10 games)")
+    # how likely the model thinks each one is to land next time, for the sort menu
+    for st in streaks + stats:
+        pk = (pricebook.get(st.get("teamId")) or {}).get(st["type"])
+        if pk:
+            st["confidence"] = round(pk["p"] * 100, 1)
+            st["fairOdds"] = pk["fair"]
+            st["record"] = f"{pk['hits']}/{pk['n']}"
     selections = upcoming_selections(have, fixtures_by_team, streaks, baselines,
                                      pricebook, 10)
     rankings = power_rankings(selections)
@@ -1563,9 +1691,11 @@ def main() -> int:
         "eventCount": len(have),
         "teamCount": teams_count,
         "streakCount": len(streaks),
+        "statsCount": len(stats),
         # the filter dropdown lists what actually has runs (in competition order);
         # the full tracked set is in leagueInfo, which drives the strip
         "leagues": [l for l in LEAGUE_LABELS if runs_by_league.get(l)],
+        "stats": stats,
         "leagueInfo": league_info,
         "types": [{k: t[k] for k in ("id", "label", "market", "polarity")} for t in TYPES],
         "markets": MARKETS,
