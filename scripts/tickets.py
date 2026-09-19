@@ -51,6 +51,46 @@ TICKET_PLANS = [
 MIN_LEG_ODDS = 1.50          # a shorter leg only dilutes the ticket
 COMP_CAP_LADDER = (2, 3, 5, 999)   # relaxed only to reach the minimum
 
+# ---------------------------------------------------------------------------
+# Flexi market policy
+#
+# SportyBet will not accept stat markets on a Flexi slip: match shots, throw-ins,
+# fouls, tackles and the like are not offered there. Every leg therefore has to be
+# a market that is actually popular on the slip - 1X2 / favourites, over-under
+# goals, both teams to score, corners, bookings, shots on target and handicaps.
+#
+# Football market ids come from scripts/hotstreaks.py, the rest from
+# scripts/sports.py. Anything not listed here is skipped when the tickets are
+# built; the run reports exactly what it dropped and why.
+# ---------------------------------------------------------------------------
+FLEXI_MARKETS = {
+    "football":   {"goals", "corners", "cards", "handicap"},
+    "amfootball": {"result", "total", "spread"},
+    "basketball": {"result", "total", "spread"},
+    "baseball":   {"result", "total", "spread"},
+    "icehockey":  {"result", "total", "spread"},
+    "tennis":     {"result", "sets"},
+    "tabletennis": {"result"},
+}
+
+# a few type ids are allowed even though their market is not: shots on target is
+# a normal slip market, the rest of the "shots" bucket (total shots, xG) is not
+FLEXI_TYPE_ALLOW = {"team_sot_o45", "team_sot_o35"}
+
+# what the page tells the reader
+MARKET_POLICY_NOTE = ("Only markets SportyBet accepts on a Flexi slip: favourites/1X2, "
+                      "over-under goals, both teams to score, corners, bookings, shots on "
+                      "target and handicaps. Stat markets (match shots, throw-ins, fouls, "
+                      "tackles, offsides) are excluded.")
+
+
+def flexi_ok(sel: dict) -> bool:
+    """Is this selection a market SportyBet takes on a Flexi ticket?"""
+    sport = sel.get("sport") or "football"
+    if sel.get("type") in FLEXI_TYPE_ALLOW:
+        return True
+    return (sel.get("market") or "") in FLEXI_MARKETS.get(sport, set())
+
 
 def load_pools() -> list[dict]:
     out: list[dict] = []
@@ -203,7 +243,8 @@ def build(pool: list[dict], window: float, size: int, tickets: int,
                 "sport": sp, "sportLabel": SPORT_LABEL.get(sp, sp),
                 "league": lg, "headline": sel.get("headline", ""),
                 "team": sel.get("team", ""), "opponent": sel.get("opponent", ""),
-                "typeLabel": sel.get("typeLabel", ""), "market": sel.get("market", ""),
+                "type": sel.get("type", ""), "typeLabel": sel.get("typeLabel", ""),
+                "market": sel.get("market", ""),
                 "run": sel.get("run", 0), "form": sel.get("form", ""),
                 "confidence": sel.get("confidence"), "record": sel.get("record", ""),
                 "odds": sel["odds"], "fairOdds": sel.get("fairOdds"),
@@ -321,12 +362,23 @@ def main() -> int:
     args = ap.parse_args()
 
     now = datetime.now(timezone.utc).timestamp()
-    pool = load_pools()
+    raw_pool = load_pools()
+    dropped: dict[str, int] = {}
+    for s in raw_pool:
+        if not flexi_ok(s):
+            key = f"{s.get('sport')}/{(s.get('market') or '?')}"
+            dropped[key] = dropped.get(key, 0) + 1
+    pool = [s for s in raw_pool if flexi_ok(s)]
     per_sport: dict[str, int] = {}
     for s in pool:
         per_sport[s["sport"]] = per_sport.get(s["sport"], 0) + 1
-    print(f"[tickets] pool: {len(pool)} selections across {len(per_sport)} sports "
+    print(f"[tickets] pool: {len(raw_pool)} selections across all markets "
+          f"-> {len(pool)} usable on a Flexi slip "
           f"({', '.join(f'{k}:{v}' for k, v in sorted(per_sport.items()))})")
+    if dropped:
+        top = sorted(dropped.items(), key=lambda kv: -kv[1])[:8]
+        print(f"[tickets] excluded {sum(dropped.values())} stat-market selections "
+              f"SportyBet blocks on Flexi: " + ", ".join(f"{k} {v}" for k, v in top))
 
     window_pool = [s for s in pool if within_window(s, now, args.window)]
     print(f"[tickets] inside the next {args.window:g}h: {len(window_pool)} selections")
@@ -349,15 +401,18 @@ def main() -> int:
         "maxLegs": args.size,
         "matchesInWindow": len({("|".join(sorted([s.get("team", ""), s.get("opponent", "")])),
                                  s.get("ts")) for s in window_pool}),
-        "poolSize": len(pool),
+        "poolSize": len(raw_pool),
+        "poolFlexiSize": len(pool),
+        "excludedMarkets": dict(sorted(dropped.items(), key=lambda kv: -kv[1])),
+        "marketPolicy": MARKET_POLICY_NOTE,
         "poolBySport": per_sport,
         "poolInWindow": len(window_pool),
         "tickets": tickets,
         "note": (f"Each ticket is filled to at least {args.min_size} legs so the full slip can "
                  f"go on SportyBet's Flexi option. Every leg kicks off inside the next "
                  f"{args.window:g} hours, no match or team is used twice, and the tickets do not "
-                 f"share legs. Prices are model estimates: only take a leg if the book's price is "
-                 f"at or above its break-even, otherwise skip it."),
+                 f"share legs. " + MARKET_POLICY_NOTE + " Prices are model estimates: only take "
+                 f"a leg if the book's price is at or above its break-even, otherwise skip it."),
     }
     os.makedirs(DATA, exist_ok=True)
     with open(os.path.join(DATA, "tickets.json"), "w", encoding="utf-8") as fh:

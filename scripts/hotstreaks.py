@@ -127,6 +127,28 @@ LEAGUES = [
     ("Bosnian Premier League",    "Bosnia and Herzegovina", [267]),
     ("Cymru Premier",             "Wales",                  [116]),
     ("NIFL Premiership",          "Northern Ireland",       [129]),
+    # Third wave (Sept 2026). Kosovo is not covered by FotMob at all - their
+    # league index lists 94 countries and Kosovo is not one of them - so it is
+    # the only requested league that could not be added.
+    ("Serbian Super Liga",        "Serbia",                 [182]),
+    ("Danish Superliga",          "Denmark",                [46]),
+    ("Czech First League",        "Czechia",                [122]),
+    ("Saudi Pro League",          "Saudi Arabia",           [536]),
+    ("Israeli Premier League",    "Israel",                 [127]),
+    ("Persian Gulf Pro League",   "Iran",                   [523]),
+    ("Colombian Primera A",       "Colombia",               [274]),
+    ("Premier Soccer League",     "South Africa",           [537]),
+    ("UAE Pro League",            "United Arab Emirates",   [538]),
+    ("Besta deildin",             "Iceland",                [215]),
+    ("Erovnuli Liga",             "Georgia",                [439]),
+    ("Kategoria Superiore",       "Albania",                [260]),
+    ("Macedonian Prva Liga",      "North Macedonia",        [249]),
+    ("Virsliga",                  "Latvia",                 [226]),
+    ("Premium liiga",             "Estonia",                [248]),
+    ("A Lyga",                    "Lithuania",              [228]),
+    ("Iraqi Stars League",        "Iraq",                   [524]),
+    ("Armenian Premier League",   "Armenia",                [118]),
+    ("Faroese Premier League",    "Faroe Islands",          [250]),
 ]
 
 LEAGUE_LABELS = [l for l, _c, _i in LEAGUES]
@@ -156,6 +178,7 @@ MARKETS = [
     {"id": "shots", "label": "Shots / xG"},
     {"id": "throws", "label": "Throw-ins"},
     {"id": "tackles", "label": "Tackles"},
+    {"id": "handicap", "label": "Handicap"},
     {"id": "other", "label": "Other"},
 ]
 
@@ -587,6 +610,8 @@ def build_rows(matches: dict[int, dict]) -> dict[int, dict]:
 # ---- stat string formatters (match the conventions of the live dashboard) --
 
 def f_score(r, _t):         return r["score"]
+def f_margin(r, _t):        return f"won by {r['gf'] - r['ga']}" if r["gf"] > r["ga"] else (
+                                   f"lost by {r['ga'] - r['gf']}" if r["ga"] > r["gf"] else "drew")
 def f_goals(r, _t):         return f"{r['total']} goals"
 def f_ht(r, _t):            return f"HT {r['ht_score']}" if r["ht_score"] else "HT —"
 def f_corners(r, _t):
@@ -760,6 +785,12 @@ TYPES: list[dict] = [
     line_type("team_tackles_u145", "Team under 14.5 tackles", "tackles", "cold", "tackles", 14.5,
               op="<", team=True),
     # ---- other ------------------------------------------------------------
+    # ---- handicap: the margin, straight off the stored score --------------
+    result_type("handicap_m15", "Covers -1.5 (wins by 2+)", "handicap", "hot",
+                lambda r: (r["gf"] - r["ga"]) >= 2, fmt=f_margin),
+    result_type("handicap_p15", "Covers +1.5 (not beaten by 2+)", "handicap", "hot",
+                lambda r: (r["ga"] - r["gf"]) <= 1, fmt=f_margin),
+    # ---- other ------------------------------------------------------------
     line_type("offsides_o25", "Over 2.5 offsides", "other", "spicy", "offsides", 2.5, fmt=f_offsides),
     line_type("offsides_o35", "Over 3.5 offsides", "other", "spicy", "offsides", 3.5, fmt=f_offsides),
     line_type("saves_o25", "Keeper over 2.5 saves", "other", "hot", "saves", 2.5, team=True, fmt=f_saves),
@@ -770,7 +801,7 @@ TYPES: list[dict] = [
               fmt=f_poss),
 ]
 
-assert len(TYPES) == 78, f"expected 78 run types, built {len(TYPES)}"
+assert len(TYPES) == 80, f"expected 80 run types, built {len(TYPES)}"
 
 
 def row_missing(row: dict, t: dict) -> bool:
@@ -982,6 +1013,15 @@ TOP_LEAGUES = {
     "Algerian Ligue 1": 0.66, "Bosnian Premier League": 0.65,
     "Belarusian Premier League": 0.62, "Cymru Premier": 0.62,
     "NIFL Premiership": 0.62,
+    # Third wave: mid-tier European and the stronger non-European top flights,
+    # still well below the big five, so the rankings keep their European bias.
+    "Serbian Super Liga": 0.70, "Czech First League": 0.70, "Danish Superliga": 0.72,
+    "Saudi Pro League": 0.72, "Israeli Premier League": 0.66, "Colombian Primera A": 0.68,
+    "Persian Gulf Pro League": 0.66, "Premier Soccer League": 0.66,
+    "UAE Pro League": 0.64, "Besta deildin": 0.60, "Erovnuli Liga": 0.62,
+    "Kategoria Superiore": 0.60, "Macedonian Prva Liga": 0.58, "Virsliga": 0.60,
+    "Premium liiga": 0.58, "A Lyga": 0.58, "Iraqi Stars League": 0.56,
+    "Armenian Premier League": 0.56, "Faroese Premier League": 0.55,
 }
 
 
