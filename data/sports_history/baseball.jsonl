@@ -7772,3 +7772,4 @@
 {"id":"824546","sport":"baseball","league":"MLB","date":"2026-09-20","ts":1789927800,"h":{"n":"Chicago White Sox","s":"CWS"},"a":{"n":"Detroit Tigers","s":"DT"},"hs":8,"as":1,"x":{"venue":"Rate Field"}}
 {"id":"825028","sport":"baseball","league":"MLB","date":"2026-09-20","ts":1789935000,"h":{"n":"Arizona Diamondbacks","s":"AD"},"a":{"n":"New York Yankees","s":"NYY"},"hs":8,"as":4,"x":{"venue":"Chase Field"}}
 {"id":"824789","sport":"baseball","league":"MLB","date":"2026-09-21","ts":1789946400,"h":{"n":"Baltimore Orioles","s":"BO"},"a":{"n":"Milwaukee Brewers","s":"MB"},"hs":0,"as":3,"x":{"venue":"Oriole Park at Camden Yards"}}
+{"id":"824221","sport":"baseball","league":"MLB","date":"2026-09-21","ts":1790030400,"h":{"n":"Detroit Tigers","s":"DT"},"a":{"n":"Washington Nationals","s":"WN"},"hs":9,"as":2,"x":{"venue":"Comerica Park"}}
