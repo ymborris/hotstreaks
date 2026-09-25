@@ -3117,3 +3117,14 @@
 {"id":"2026010034","sport":"icehockey","league":"NHL","date":"2026-09-24","ts":1790208000,"h":{"n":"Stars","s":"STA"},"a":{"n":"Wild","s":"WIL"},"hs":2,"as":0,"x":{"venue":"American Airlines Center"}}
 {"id":"2026010035","sport":"icehockey","league":"NHL","date":"2026-09-24","ts":1790204400,"h":{"n":"Maple Leafs","s":"ML"},"a":{"n":"Senators","s":"SEN"},"hs":6,"as":1,"x":{"venue":"Scotiabank Arena"}}
 {"id":"2026010036","sport":"icehockey","league":"NHL","date":"2026-09-24","ts":1790204400,"h":{"n":"Senators","s":"SEN"},"a":{"n":"Maple Leafs","s":"ML"},"hs":2,"as":4,"x":{"venue":"Canadian Tire Centre"}}
+{"id":"2026010037","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790298000,"h":{"n":"Canucks","s":"CAN"},"a":{"n":"Oilers","s":"OIL"},"hs":1,"as":2,"x":{"venue":"Rogers Arena"}}
+{"id":"2026010038","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790300400,"h":{"n":"Kraken","s":"KRA"},"a":{"n":"Flames","s":"FLA"},"hs":4,"as":3,"x":{"venue":"Climate Pledge Arena"}}
+{"id":"2026010039","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790301600,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Ducks","s":"DUC"},"hs":10,"as":0,"x":{"venue":"SAP Center at San Jose"}}
+{"id":"2026010040","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790290800,"h":{"n":"Flyers","s":"FLY"},"a":{"n":"Bruins","s":"BRU"},"hs":2,"as":0,"x":{"venue":"Xfinity Mobile Arena"}}
+{"id":"2026010041","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790290800,"h":{"n":"Red Wings","s":"RW"},"a":{"n":"Sabres","s":"SAB"},"hs":3,"as":2,"x":{"venue":"Little Caesars Arena"}}
+{"id":"2026010042","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790294400,"h":{"n":"Blues","s":"BLU"},"a":{"n":"Blackhawks","s":"BLA"},"hs":1,"as":0,"x":{"venue":"Enterprise Center"}}
+{"id":"2026010043","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790290800,"h":{"n":"Lightning","s":"LIG"},"a":{"n":"Panthers","s":"PAN"},"hs":3,"as":5,"x":{"venue":"Benchmark International Arena"}}
+{"id":"2026010044","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790290800,"h":{"n":"Hurricanes","s":"HUR"},"a":{"n":"Predators","s":"PRE"},"hs":6,"as":5,"x":{"venue":"First Horizon Coliseum"}}
+{"id":"2026010045","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790290800,"h":{"n":"Rangers","s":"RAN"},"a":{"n":"Devils","s":"DEV"},"hs":4,"as":3,"x":{"venue":"Madison Square Garden"}}
+{"id":"2026010046","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790290800,"h":{"n":"Blue Jackets","s":"BJ"},"a":{"n":"Penguins","s":"PEN"},"hs":4,"as":0,"x":{"venue":"Nationwide Arena"}}
+{"id":"2026010047","sport":"icehockey","league":"NHL","date":"2026-09-25","ts":1790301600,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Mammoth","s":"MAM"},"hs":5,"as":4,"x":{"venue":"T-Mobile Arena"}}
