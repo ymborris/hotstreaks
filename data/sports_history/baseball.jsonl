@@ -7818,3 +7818,7 @@
 {"id":"823895","sport":"baseball","league":"MLB","date":"2026-09-25","ts":1790302200,"h":{"n":"Los Angeles Dodgers","s":"LAD"},"a":{"n":"San Diego Padres","s":"SDP"},"hs":2,"as":4,"x":{"venue":"UNIQLO Field at Dodger Stadium"}}
 {"id":"824866","sport":"baseball","league":"MLB","date":"2026-09-25","ts":1790291700,"h":{"n":"Atlanta Braves","s":"AB"},"a":{"n":"Cincinnati Reds","s":"CR"},"hs":6,"as":7,"x":{"venue":"Truist Park"}}
 {"id":"824950","sport":"baseball","league":"MLB","date":"2026-09-25","ts":1790300400,"h":{"n":"Athletics","s":"ATH"},"a":{"n":"Houston Astros","s":"HA"},"hs":5,"as":7,"x":{"venue":"Sutter Health Park"}}
+{"id":"823409","sport":"baseball","league":"MLB","date":"2026-09-25","ts":1790376000,"h":{"n":"Philadelphia Phillies","s":"PP"},"a":{"n":"Tampa Bay Rays","s":"TBR"},"hs":0,"as":2,"x":{"venue":"Citizens Bank Park"}}
+{"id":"823491","sport":"baseball","league":"MLB","date":"2026-09-25","ts":1790366700,"h":{"n":"New York Yankees","s":"NYY"},"a":{"n":"Baltimore Orioles","s":"BO"},"hs":2,"as":10,"x":{"venue":"Yankee Stadium"}}
+{"id":"824703","sport":"baseball","league":"MLB","date":"2026-09-25","ts":1790355900,"h":{"n":"Boston Red Sox","s":"BRS"},"a":{"n":"Chicago Cubs","s":"CC"},"hs":4,"as":3,"x":{"venue":"Fenway Park"}}
+{"id":"824706","sport":"baseball","league":"MLB","date":"2026-09-25","ts":1790372100,"h":{"n":"Boston Red Sox","s":"BRS"},"a":{"n":"Chicago Cubs","s":"CC"},"hs":2,"as":0,"x":{"venue":"Fenway Park"}}
