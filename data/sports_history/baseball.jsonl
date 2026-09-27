@@ -7840,3 +7840,11 @@
 {"id":"823165","sport":"baseball","league":"MLB","date":"2026-09-26","ts":1790453100,"h":{"n":"San Francisco Giants","s":"SFG"},"a":{"n":"Los Angeles Dodgers","s":"LAD"},"hs":3,"as":4,"x":{"venue":"Oracle Park"}}
 {"id":"823813","sport":"baseball","league":"MLB","date":"2026-09-26","ts":1790453400,"h":{"n":"Miami Marlins","s":"MM"},"a":{"n":"Atlanta Braves","s":"AB"},"hs":3,"as":8,"x":{"venue":"loanDepot park"}}
 {"id":"824219","sport":"baseball","league":"MLB","date":"2026-09-26","ts":1790442600,"h":{"n":"Detroit Tigers","s":"DT"},"a":{"n":"Pittsburgh Pirates","s":"PP"},"hs":4,"as":3,"x":{"venue":"Comerica Park"}}
+{"id":"823653","sport":"baseball","league":"MLB","date":"2026-09-26","ts":1790453400,"h":{"n":"Minnesota Twins","s":"MT"},"a":{"n":"Texas Rangers","s":"TR"},"hs":2,"as":6,"x":{"venue":"Target Field"}}
+{"id":"823083","sport":"baseball","league":"MLB","date":"2026-09-27","ts":1790473200,"h":{"n":"Seattle Mariners","s":"SM"},"a":{"n":"Los Angeles Angels","s":"LAA"},"hs":8,"as":4,"x":{"venue":"T-Mobile Park"}}
+{"id":"823245","sport":"baseball","league":"MLB","date":"2026-09-27","ts":1790469600,"h":{"n":"San Diego Padres","s":"SDP"},"a":{"n":"Arizona Diamondbacks","s":"AD"},"hs":10,"as":7,"x":{"venue":"Petco Park"}}
+{"id":"823407","sport":"baseball","league":"MLB","date":"2026-09-27","ts":1790464500,"h":{"n":"Philadelphia Phillies","s":"PP"},"a":{"n":"Tampa Bay Rays","s":"TBR"},"hs":1,"as":12,"x":{"venue":"Citizens Bank Park"}}
+{"id":"823733","sport":"baseball","league":"MLB","date":"2026-09-27","ts":1790464200,"h":{"n":"Milwaukee Brewers","s":"MB"},"a":{"n":"St. Louis Cardinals","s":"LC"},"hs":3,"as":2,"x":{"venue":"American Family Field"}}
+{"id":"824057","sport":"baseball","league":"MLB","date":"2026-09-27","ts":1790464200,"h":{"n":"Kansas City Royals","s":"KCR"},"a":{"n":"Cleveland Guardians","s":"CG"},"hs":5,"as":11,"x":{"venue":"Kauffman Stadium"}}
+{"id":"824543","sport":"baseball","league":"MLB","date":"2026-09-27","ts":1790464200,"h":{"n":"Chicago White Sox","s":"CWS"},"a":{"n":"Colorado Rockies","s":"CR"},"hs":6,"as":9,"x":{"venue":"Rate Field"}}
+{"id":"824949","sport":"baseball","league":"MLB","date":"2026-09-27","ts":1790473200,"h":{"n":"Athletics","s":"ATH"},"a":{"n":"Houston Astros","s":"HA"},"hs":2,"as":13,"x":{"venue":"Sutter Health Park"}}

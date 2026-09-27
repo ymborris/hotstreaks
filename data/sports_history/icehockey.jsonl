@@ -3138,3 +3138,11 @@
 {"id":"2026010055","sport":"icehockey","league":"NHL","date":"2026-09-26","ts":1790449200,"h":{"n":"Sabres","s":"SAB"},"a":{"n":"Penguins","s":"PEN"},"hs":1,"as":3,"x":{"venue":"KeyBank Center"}}
 {"id":"2026010057","sport":"icehockey","league":"NHL","date":"2026-09-26","ts":1790456400,"h":{"n":"Flyers","s":"FLY"},"a":{"n":"Capitals","s":"CAP"},"hs":1,"as":5,"x":{"venue":"Xfinity Mobile Arena"}}
 {"id":"2026010059","sport":"icehockey","league":"NHL","date":"2026-09-26","ts":1790460000,"h":{"n":"Panthers","s":"PAN"},"a":{"n":"Lightning","s":"LIG"},"hs":2,"as":3,"x":{"venue":"Amerant Bank Arena"}}
+{"id":"2026010056","sport":"icehockey","league":"NHL","date":"2026-09-27","ts":1790463600,"h":{"n":"Canucks","s":"CAN"},"a":{"n":"Kraken","s":"KRA"},"hs":4,"as":3,"x":{"venue":"Rogers Arena"}}
+{"id":"2026010058","sport":"icehockey","league":"NHL","date":"2026-09-27","ts":1790463600,"h":{"n":"Blackhawks","s":"BLA"},"a":{"n":"Blues","s":"BLU"},"hs":3,"as":2,"x":{"venue":"United Center"}}
+{"id":"2026010060","sport":"icehockey","league":"NHL","date":"2026-09-27","ts":1790470800,"h":{"n":"Oilers","s":"OIL"},"a":{"n":"Flames","s":"FLA"},"hs":4,"as":1,"x":{"venue":"Rogers Place"}}
+{"id":"2026010061","sport":"icehockey","league":"NHL","date":"2026-09-27","ts":1790463600,"h":{"n":"Red Wings","s":"RW"},"a":{"n":"Blue Jackets","s":"BJ"},"hs":2,"as":4,"x":{"venue":"Little Caesars Arena"}}
+{"id":"2026010062","sport":"icehockey","league":"NHL","date":"2026-09-27","ts":1790465400,"h":{"n":"Islanders","s":"ISL"},"a":{"n":"Devils","s":"DEV"},"hs":1,"as":4,"x":{"venue":"UBS Arena"}}
+{"id":"2026010063","sport":"icehockey","league":"NHL","date":"2026-09-27","ts":1790474400,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Sharks","s":"SHA"},"hs":2,"as":4,"x":{"venue":"T-Mobile Arena"}}
+{"id":"2026010064","sport":"icehockey","league":"NHL","date":"2026-09-27","ts":1790463600,"h":{"n":"Senators","s":"SEN"},"a":{"n":"Canadiens","s":"CAN"},"hs":4,"as":3,"x":{"venue":"Canadian Tire Centre"}}
+{"id":"2026010065","sport":"icehockey","league":"NHL","date":"2026-09-27","ts":1790463600,"h":{"n":"Canadiens","s":"CAN"},"a":{"n":"Senators","s":"SEN"},"hs":4,"as":2,"x":{"venue":"Centre Bell"}}
