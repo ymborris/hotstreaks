@@ -7866,3 +7866,5 @@
 {"id":"849849","sport":"baseball","league":"MLB","date":"2026-09-29","ts":1790715600,"h":{"n":"Houston Astros","s":"HA"},"a":{"n":"Chicago White Sox","s":"CWS"},"hs":3,"as":6,"x":{"venue":"Daikin Park"}}
 {"id":"849843","sport":"baseball","league":"MLB","date":"2026-09-30","ts":1790733600,"h":{"n":"San Diego Padres","s":"SDP"},"a":{"n":"Chicago Cubs","s":"CC"},"hs":8,"as":0,"x":{"venue":"Petco Park"}}
 {"id":"849851","sport":"baseball","league":"MLB","date":"2026-09-30","ts":1790726400,"h":{"n":"New York Yankees","s":"NYY"},"a":{"n":"Boston Red Sox","s":"BRS"},"hs":9,"as":0,"x":{"venue":"Yankee Stadium"}}
+{"id":"849841","sport":"baseball","league":"MLB","date":"2026-09-30","ts":1790791200,"h":{"n":"Atlanta Braves","s":"AB"},"a":{"n":"Philadelphia Phillies","s":"PP"},"hs":3,"as":4,"x":{"venue":"Truist Park"}}
+{"id":"849846","sport":"baseball","league":"MLB","date":"2026-09-30","ts":1790802000,"h":{"n":"Houston Astros","s":"HA"},"a":{"n":"Chicago White Sox","s":"CWS"},"hs":3,"as":7,"x":{"venue":"Daikin Park"}}
