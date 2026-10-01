@@ -3151,3 +3151,6 @@
 {"id":"2026020003","sport":"icehockey","league":"NHL","date":"2026-09-30","ts":1790726400,"h":{"n":"Bruins","s":"BRU"},"a":{"n":"Rangers","s":"RAN"},"hs":3,"as":0,"x":{"venue":"TD Garden"}}
 {"id":"2026020004","sport":"icehockey","league":"NHL","date":"2026-09-30","ts":1790733600,"h":{"n":"Oilers","s":"OIL"},"a":{"n":"Canucks","s":"CAN"},"hs":5,"as":6,"x":{"venue":"Rogers Place"}}
 {"id":"2026020005","sport":"icehockey","league":"NHL","date":"2026-09-30","ts":1790735400,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Blackhawks","s":"BLA"},"hs":5,"as":2,"x":{"venue":"T-Mobile Arena"}}
+{"id":"2026020006","sport":"icehockey","league":"NHL","date":"2026-10-01","ts":1790811000,"h":{"n":"Flyers","s":"FLY"},"a":{"n":"Penguins","s":"PEN"},"hs":0,"as":7,"x":{"venue":"Xfinity Mobile Arena"}}
+{"id":"2026020007","sport":"icehockey","league":"NHL","date":"2026-10-01","ts":1790820000,"h":{"n":"Avalanche","s":"AVA"},"a":{"n":"Kings","s":"KIN"},"hs":8,"as":4,"x":{"venue":"Ball Arena"}}
+{"id":"2026020008","sport":"icehockey","league":"NHL","date":"2026-10-01","ts":1790811000,"h":{"n":"Maple Leafs","s":"ML"},"a":{"n":"Islanders","s":"ISL"},"hs":2,"as":1,"x":{"venue":"Scotiabank Arena"}}
