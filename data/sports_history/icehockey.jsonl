@@ -3164,3 +3164,6 @@
 {"id":"2026020016","sport":"icehockey","league":"NHL","date":"2026-10-02","ts":1790906400,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Panthers","s":"PAN"},"hs":4,"as":3,"x":{"venue":"SAP Center at San Jose"}}
 {"id":"2026020017","sport":"icehockey","league":"NHL","date":"2026-10-02","ts":1790980200,"h":{"n":"Red Wings","s":"RW"},"a":{"n":"Rangers","s":"RAN"},"hs":0,"as":2,"x":{"venue":"Little Caesars Arena"}}
 {"id":"2026020018","sport":"icehockey","league":"NHL","date":"2026-10-03","ts":1790982000,"h":{"n":"Hurricanes","s":"HUR"},"a":{"n":"Capitals","s":"CAP"},"hs":2,"as":5,"x":{"venue":"Lenovo Center"}}
+{"id":"2026020019","sport":"icehockey","league":"NHL","date":"2026-10-03","ts":1790985600,"h":{"n":"Jets","s":"JET"},"a":{"n":"Bruins","s":"BRU"},"hs":3,"as":4,"x":{"venue":"Canada Life Centre"}}
+{"id":"2026020020","sport":"icehockey","league":"NHL","date":"2026-10-03","ts":1790989200,"h":{"n":"Stars","s":"STA"},"a":{"n":"Blues","s":"BLU"},"hs":0,"as":4,"x":{"venue":"American Airlines Center"}}
+{"id":"2026020021","sport":"icehockey","league":"NHL","date":"2026-10-03","ts":1790992800,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Ducks","s":"DUC"},"hs":3,"as":4,"x":{"venue":"T-Mobile Arena"}}
