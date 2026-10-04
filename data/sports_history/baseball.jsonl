@@ -7871,3 +7871,6 @@
 {"id":"849842","sport":"baseball","league":"MLB","date":"2026-10-01","ts":1790820000,"h":{"n":"San Diego Padres","s":"SDP"},"a":{"n":"Chicago Cubs","s":"CC"},"hs":4,"as":1,"x":{"venue":"Petco Park"}}
 {"id":"849848","sport":"baseball","league":"MLB","date":"2026-10-01","ts":1790812800,"h":{"n":"New York Yankees","s":"NYY"},"a":{"n":"Boston Red Sox","s":"BRS"},"hs":9,"as":2,"x":{"venue":"Yankee Stadium"}}
 {"id":"849844","sport":"baseball","league":"MLB","date":"2026-10-02","ts":1790899200,"h":{"n":"Atlanta Braves","s":"AB"},"a":{"n":"Philadelphia Phillies","s":"PP"},"hs":6,"as":2,"x":{"venue":"Truist Park"}}
+{"id":"849828","sport":"baseball","league":"MLB","date":"2026-10-03","ts":1791057600,"h":{"n":"Los Angeles Dodgers","s":"LAD"},"a":{"n":"Atlanta Braves","s":"AB"},"hs":5,"as":3,"x":{"venue":"UNIQLO Field at Dodger Stadium"}}
+{"id":"849829","sport":"baseball","league":"MLB","date":"2026-10-03","ts":1791046800,"h":{"n":"Cleveland Guardians","s":"CG"},"a":{"n":"Chicago White Sox","s":"CWS"},"hs":0,"as":3,"x":{"venue":"Progressive Field"}}
+{"id":"849835","sport":"baseball","league":"MLB","date":"2026-10-03","ts":1791066600,"h":{"n":"Tampa Bay Rays","s":"TBR"},"a":{"n":"New York Yankees","s":"NYY"},"hs":1,"as":0,"x":{"venue":"Tropicana Field"}}
