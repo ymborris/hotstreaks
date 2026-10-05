@@ -3182,3 +3182,6 @@
 {"id":"2026020034","sport":"icehockey","league":"NHL","date":"2026-10-04","ts":1791079200,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Kings","s":"KIN"},"hs":5,"as":4,"x":{"venue":"SAP Center at San Jose"}}
 {"id":"2026020035","sport":"icehockey","league":"NHL","date":"2026-10-04","ts":1791133200,"h":{"n":"Red Wings","s":"RW"},"a":{"n":"Jets","s":"JET"},"hs":2,"as":3,"x":{"venue":"Little Caesars Arena"}}
 {"id":"2026020036","sport":"icehockey","league":"NHL","date":"2026-10-04","ts":1791151200,"h":{"n":"Rangers","s":"RAN"},"a":{"n":"Mammoth","s":"MAM"},"hs":4,"as":2,"x":{"venue":"Madison Square Garden"}}
+{"id":"2026020037","sport":"icehockey","league":"NHL","date":"2026-10-05","ts":1791158400,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Panthers","s":"PAN"},"hs":3,"as":2,"x":{"venue":"Honda Center"}}
+{"id":"2026020038","sport":"icehockey","league":"NHL","date":"2026-10-05","ts":1791158400,"h":{"n":"Kraken","s":"KRA"},"a":{"n":"Flames","s":"FLA"},"hs":6,"as":1,"x":{"venue":"Climate Pledge Arena"}}
+{"id":"2026020039","sport":"icehockey","league":"NHL","date":"2026-10-05","ts":1791162000,"h":{"n":"Canucks","s":"CAN"},"a":{"n":"Golden Knights","s":"GK"},"hs":2,"as":3,"x":{"venue":"Rogers Arena"}}

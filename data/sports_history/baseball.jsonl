@@ -7876,3 +7876,4 @@
 {"id":"849835","sport":"baseball","league":"MLB","date":"2026-10-03","ts":1791066600,"h":{"n":"Tampa Bay Rays","s":"TBR"},"a":{"n":"New York Yankees","s":"NYY"},"hs":1,"as":0,"x":{"venue":"Tropicana Field"}}
 {"id":"849830","sport":"baseball","league":"MLB","date":"2026-10-04","ts":1791073800,"h":{"n":"Milwaukee Brewers","s":"MB"},"a":{"n":"San Diego Padres","s":"SDP"},"hs":3,"as":2,"x":{"venue":"American Family Field"}}
 {"id":"849825","sport":"baseball","league":"MLB","date":"2026-10-04","ts":1791144000,"h":{"n":"Milwaukee Brewers","s":"MB"},"a":{"n":"San Diego Padres","s":"SDP"},"hs":4,"as":3,"x":{"venue":"American Family Field"}}
+{"id":"849823","sport":"baseball","league":"MLB","date":"2026-10-05","ts":1791158400,"h":{"n":"Los Angeles Dodgers","s":"LAD"},"a":{"n":"Atlanta Braves","s":"AB"},"hs":2,"as":3,"x":{"venue":"UNIQLO Field at Dodger Stadium"}}
