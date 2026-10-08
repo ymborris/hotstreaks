@@ -3198,3 +3198,5 @@
 {"id":"2026020050","sport":"icehockey","league":"NHL","date":"2026-10-07","ts":1791331200,"h":{"n":"Blackhawks","s":"BLA"},"a":{"n":"Blues","s":"BLU"},"hs":4,"as":2,"x":{"venue":"United Center"}}
 {"id":"2026020051","sport":"icehockey","league":"NHL","date":"2026-10-07","ts":1791337200,"h":{"n":"Kraken","s":"KRA"},"a":{"n":"Golden Knights","s":"GK"},"hs":2,"as":6,"x":{"venue":"Climate Pledge Arena"}}
 {"id":"2026020052","sport":"icehockey","league":"NHL","date":"2026-10-07","ts":1791338400,"h":{"n":"Kings","s":"KIN"},"a":{"n":"Panthers","s":"PAN"},"hs":1,"as":2,"x":{"venue":"Crypto.com Arena"}}
+{"id":"2026020053","sport":"icehockey","league":"NHL","date":"2026-10-08","ts":1791415800,"h":{"n":"Capitals","s":"CAP"},"a":{"n":"Penguins","s":"PEN"},"hs":5,"as":3,"x":{"venue":"Capital One Arena"}}
+{"id":"2026020054","sport":"icehockey","league":"NHL","date":"2026-10-08","ts":1791415800,"h":{"n":"Jets","s":"JET"},"a":{"n":"Avalanche","s":"AVA"},"hs":3,"as":2,"x":{"venue":"Canada Life Centre"}}
