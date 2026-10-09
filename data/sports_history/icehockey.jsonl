@@ -3201,3 +3201,11 @@
 {"id":"2026020053","sport":"icehockey","league":"NHL","date":"2026-10-08","ts":1791415800,"h":{"n":"Capitals","s":"CAP"},"a":{"n":"Penguins","s":"PEN"},"hs":5,"as":3,"x":{"venue":"Capital One Arena"}}
 {"id":"2026020054","sport":"icehockey","league":"NHL","date":"2026-10-08","ts":1791415800,"h":{"n":"Jets","s":"JET"},"a":{"n":"Avalanche","s":"AVA"},"hs":3,"as":2,"x":{"venue":"Canada Life Centre"}}
 {"id":"2026020055","sport":"icehockey","league":"NHL","date":"2026-10-08","ts":1791424800,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Oilers","s":"OIL"},"hs":2,"as":5,"x":{"venue":"Honda Center"}}
+{"id":"2026020056","sport":"icehockey","league":"NHL","date":"2026-10-09","ts":1791500400,"h":{"n":"Bruins","s":"BRU"},"a":{"n":"Mammoth","s":"MAM"},"hs":6,"as":1,"x":{"venue":"TD Garden"}}
+{"id":"2026020057","sport":"icehockey","league":"NHL","date":"2026-10-09","ts":1791500400,"h":{"n":"Sabres","s":"SAB"},"a":{"n":"Stars","s":"STA"},"hs":0,"as":4,"x":{"venue":"KeyBank Center"}}
+{"id":"2026020058","sport":"icehockey","league":"NHL","date":"2026-10-09","ts":1791500400,"h":{"n":"Canadiens","s":"CAN"},"a":{"n":"Predators","s":"PRE"},"hs":2,"as":5,"x":{"venue":"Centre Bell"}}
+{"id":"2026020059","sport":"icehockey","league":"NHL","date":"2026-10-09","ts":1791500400,"h":{"n":"Senators","s":"SEN"},"a":{"n":"Flyers","s":"FLY"},"hs":2,"as":1,"x":{"venue":"Canadian Tire Centre"}}
+{"id":"2026020060","sport":"icehockey","league":"NHL","date":"2026-10-09","ts":1791500400,"h":{"n":"Lightning","s":"LIG"},"a":{"n":"Wild","s":"WIL"},"hs":3,"as":2,"x":{"venue":"Benchmark International Arena"}}
+{"id":"2026020061","sport":"icehockey","league":"NHL","date":"2026-10-09","ts":1791500400,"h":{"n":"Hurricanes","s":"HUR"},"a":{"n":"Canucks","s":"CAN"},"hs":7,"as":2,"x":{"venue":"Lenovo Center"}}
+{"id":"2026020062","sport":"icehockey","league":"NHL","date":"2026-10-09","ts":1791502200,"h":{"n":"Islanders","s":"ISL"},"a":{"n":"Blackhawks","s":"BLA"},"hs":4,"as":1,"x":{"venue":"UBS Arena"}}
+{"id":"2026020063","sport":"icehockey","league":"NHL","date":"2026-10-09","ts":1791504000,"h":{"n":"Blues","s":"BLU"},"a":{"n":"Sharks","s":"SHA"},"hs":2,"as":3,"x":{"venue":"Enterprise Center"}}
