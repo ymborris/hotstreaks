@@ -7887,3 +7887,4 @@
 {"id":"849838","sport":"baseball","league":"MLB","date":"2026-10-08","ts":1791417600,"h":{"n":"New York Yankees","s":"NYY"},"a":{"n":"Tampa Bay Rays","s":"TBR"},"hs":3,"as":4,"x":{"venue":"Yankee Stadium"}}
 {"id":"849832","sport":"baseball","league":"MLB","date":"2026-10-09","ts":1791504000,"h":{"n":"Chicago White Sox","s":"CWS"},"a":{"n":"Cleveland Guardians","s":"CG"},"hs":5,"as":9,"x":{"venue":"Rate Field"}}
 {"id":"849831","sport":"baseball","league":"MLB","date":"2026-10-11","ts":1791676800,"h":{"n":"Cleveland Guardians","s":"CG"},"a":{"n":"Chicago White Sox","s":"CWS"},"hs":2,"as":0,"x":{"venue":"Progressive Field"}}
+{"id":"849809","sport":"baseball","league":"MLB","date":"2026-10-12","ts":1791763200,"h":{"n":"Milwaukee Brewers","s":"MB"},"a":{"n":"Los Angeles Dodgers","s":"LAD"},"hs":2,"as":1,"x":{"venue":"American Family Field"}}
