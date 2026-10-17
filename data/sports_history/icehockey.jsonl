@@ -3264,3 +3264,5 @@
 {"id":"2026020116","sport":"icehockey","league":"NHL","date":"2026-10-16","ts":1792108800,"h":{"n":"Wild","s":"WIL"},"a":{"n":"Blues","s":"BLU"},"hs":5,"as":4,"x":{"venue":"Grand Casino Arena"}}
 {"id":"2026020117","sport":"icehockey","league":"NHL","date":"2026-10-16","ts":1792112400,"h":{"n":"Oilers","s":"OIL"},"a":{"n":"Mammoth","s":"MAM"},"hs":2,"as":4,"x":{"venue":"Rogers Place"}}
 {"id":"2026020118","sport":"icehockey","league":"NHL","date":"2026-10-16","ts":1792116000,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Flames","s":"FLA"},"hs":6,"as":2,"x":{"venue":"T-Mobile Arena"}}
+{"id":"2026020119","sport":"icehockey","league":"NHL","date":"2026-10-17","ts":1792198800,"h":{"n":"Avalanche","s":"AVA"},"a":{"n":"Penguins","s":"PEN"},"hs":5,"as":2,"x":{"venue":"Ball Arena"}}
+{"id":"2026020120","sport":"icehockey","league":"NHL","date":"2026-10-17","ts":1792202400,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Bruins","s":"BRU"},"hs":2,"as":4,"x":{"venue":"Honda Center"}}
