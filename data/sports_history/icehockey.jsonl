@@ -3280,3 +3280,4 @@
 {"id":"2026020132","sport":"icehockey","league":"NHL","date":"2026-10-18","ts":1792285200,"h":{"n":"Kings","s":"KIN"},"a":{"n":"Bruins","s":"BRU"},"hs":1,"as":4,"x":{"venue":"Crypto.com Arena"}}
 {"id":"2026020133","sport":"icehockey","league":"NHL","date":"2026-10-18","ts":1792288800,"h":{"n":"Mammoth","s":"MAM"},"a":{"n":"Oilers","s":"OIL"},"hs":2,"as":6,"x":{"venue":"Delta Center"}}
 {"id":"2026020134","sport":"icehockey","league":"NHL","date":"2026-10-18","ts":1792288800,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Penguins","s":"PEN"},"hs":6,"as":2,"x":{"venue":"T-Mobile Arena"}}
+{"id":"2026020135","sport":"icehockey","league":"NHL","date":"2026-10-18","ts":1792360800,"h":{"n":"Wild","s":"WIL"},"a":{"n":"Blue Jackets","s":"BJ"},"hs":2,"as":1,"x":{"venue":"Grand Casino Arena"}}
