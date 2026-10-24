@@ -7897,3 +7897,4 @@
 {"id":"849816","sport":"baseball","league":"MLB","date":"2026-10-18","ts":1792282080,"h":{"n":"Cleveland Guardians","s":"CG"},"a":{"n":"Tampa Bay Rays","s":"TBR"},"hs":3,"as":7,"x":{"venue":"Progressive Field"}}
 {"id":"849817","sport":"baseball","league":"MLB","date":"2026-10-18","ts":1792357680,"h":{"n":"Cleveland Guardians","s":"CG"},"a":{"n":"Tampa Bay Rays","s":"TBR"},"hs":1,"as":3,"x":{"venue":"Progressive Field"}}
 {"id":"849815","sport":"baseball","league":"MLB","date":"2026-10-20","ts":1792454880,"h":{"n":"Tampa Bay Rays","s":"TBR"},"a":{"n":"Cleveland Guardians","s":"CG"},"hs":7,"as":3,"x":{"venue":"Tropicana Field"}}
+{"id":"849805","sport":"baseball","league":"MLB","date":"2026-10-24","ts":1792800000,"h":{"n":"Milwaukee Brewers","s":"MB"},"a":{"n":"Tampa Bay Rays","s":"TBR"},"hs":3,"as":2,"x":{"venue":"American Family Field"}}
