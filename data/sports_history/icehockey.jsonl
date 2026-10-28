@@ -3333,3 +3333,4 @@
 {"id":"2026020185","sport":"icehockey","league":"NHL","date":"2026-10-27","ts":1793055600,"h":{"n":"Rangers","s":"RAN"},"a":{"n":"Kings","s":"KIN"},"hs":3,"as":6,"x":{"venue":"Madison Square Garden"}}
 {"id":"2026020186","sport":"icehockey","league":"NHL","date":"2026-10-27","ts":1793061000,"h":{"n":"Flames","s":"FLA"},"a":{"n":"Maple Leafs","s":"ML"},"hs":5,"as":2,"x":{"venue":"Scotiabank Saddledome"}}
 {"id":"2026020187","sport":"icehockey","league":"NHL","date":"2026-10-27","ts":1793064600,"h":{"n":"Oilers","s":"OIL"},"a":{"n":"Red Wings","s":"RW"},"hs":3,"as":4,"x":{"venue":"Rogers Place"}}
+{"id":"2026020188","sport":"icehockey","league":"NHL","date":"2026-10-28","ts":1793142000,"h":{"n":"Flyers","s":"FLY"},"a":{"n":"Blue Jackets","s":"BJ"},"hs":3,"as":4,"x":{"venue":"Xfinity Mobile Arena"}}
