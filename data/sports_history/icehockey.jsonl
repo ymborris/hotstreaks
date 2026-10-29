@@ -3344,3 +3344,4 @@
 {"id":"2026020196","sport":"icehockey","league":"NHL","date":"2026-10-28","ts":1793152800,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Senators","s":"SEN"},"hs":4,"as":1,"x":{"venue":"T-Mobile Arena"}}
 {"id":"2026020197","sport":"icehockey","league":"NHL","date":"2026-10-28","ts":1793152800,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Canucks","s":"CAN"},"hs":5,"as":6,"x":{"venue":"Honda Center"}}
 {"id":"2026020198","sport":"icehockey","league":"NHL","date":"2026-10-28","ts":1793154600,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Sabres","s":"SAB"},"hs":0,"as":2,"x":{"venue":"SAP Center at San Jose"}}
+{"id":"2026020199","sport":"icehockey","league":"NHL","date":"2026-10-29","ts":1793230200,"h":{"n":"Capitals","s":"CAP"},"a":{"n":"Flyers","s":"FLY"},"hs":5,"as":2,"x":{"venue":"Capital One Arena"}}
