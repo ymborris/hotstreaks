@@ -3370,3 +3370,5 @@
 {"id":"2026020222","sport":"icehockey","league":"NHL","date":"2026-10-31","ts":1793476800,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Senators","s":"SEN"},"hs":1,"as":5,"x":{"venue":"SAP Center at San Jose"}}
 {"id":"2026020223","sport":"icehockey","league":"NHL","date":"2026-11-01","ts":1793487600,"h":{"n":"Canadiens","s":"CAN"},"a":{"n":"Penguins","s":"PEN"},"hs":5,"as":4,"x":{"venue":"Centre Bell"}}
 {"id":"2026020224","sport":"icehockey","league":"NHL","date":"2026-11-01","ts":1793487600,"h":{"n":"Canucks","s":"CAN"},"a":{"n":"Maple Leafs","s":"ML"},"hs":2,"as":4,"x":{"venue":"Rogers Arena"}}
+{"id":"2026020225","sport":"icehockey","league":"NHL","date":"2026-11-01","ts":1793491200,"h":{"n":"Stars","s":"STA"},"a":{"n":"Blue Jackets","s":"BJ"},"hs":3,"as":1,"x":{"venue":"American Airlines Center"}}
+{"id":"2026020226","sport":"icehockey","league":"NHL","date":"2026-11-01","ts":1793498400,"h":{"n":"Avalanche","s":"AVA"},"a":{"n":"Flames","s":"FLA"},"hs":5,"as":2,"x":{"venue":"Ball Arena"}}
