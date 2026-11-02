@@ -3376,3 +3376,4 @@
 {"id":"2026020228","sport":"icehockey","league":"NHL","date":"2026-11-01","ts":1793565000,"h":{"n":"Capitals","s":"CAP"},"a":{"n":"Wild","s":"WIL"},"hs":1,"as":5,"x":{"venue":"Capital One Arena"}}
 {"id":"2026020229","sport":"icehockey","league":"NHL","date":"2026-11-01","ts":1793566800,"h":{"n":"Flyers","s":"FLY"},"a":{"n":"Mammoth","s":"MAM"},"hs":6,"as":3,"x":{"venue":"Xfinity Mobile Arena"}}
 {"id":"2026020230","sport":"icehockey","league":"NHL","date":"2026-11-02","ts":1793574000,"h":{"n":"Rangers","s":"RAN"},"a":{"n":"Oilers","s":"OIL"},"hs":1,"as":4,"x":{"venue":"Madison Square Garden"}}
+{"id":"2026020231","sport":"icehockey","league":"NHL","date":"2026-11-02","ts":1793581200,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Senators","s":"SEN"},"hs":6,"as":3,"x":{"venue":"Honda Center"}}
