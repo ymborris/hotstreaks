@@ -3380,3 +3380,4 @@
 {"id":"2026020232","sport":"icehockey","league":"NHL","date":"2026-11-03","ts":1793664000,"h":{"n":"Bruins","s":"BRU"},"a":{"n":"Golden Knights","s":"GK"},"hs":3,"as":2,"x":{"venue":"TD Garden"}}
 {"id":"2026020233","sport":"icehockey","league":"NHL","date":"2026-11-03","ts":1793664000,"h":{"n":"Panthers","s":"PAN"},"a":{"n":"Red Wings","s":"RW"},"hs":3,"as":5,"x":{"venue":"Amerant Bank Arena"}}
 {"id":"2026020234","sport":"icehockey","league":"NHL","date":"2026-11-03","ts":1793667600,"h":{"n":"Blackhawks","s":"BLA"},"a":{"n":"Avalanche","s":"AVA"},"hs":2,"as":5,"x":{"venue":"United Center"}}
+{"id":"2026020235","sport":"icehockey","league":"NHL","date":"2026-11-03","ts":1793671200,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Flames","s":"FLA"},"hs":1,"as":2,"x":{"venue":"SAP Center at San Jose"}}
