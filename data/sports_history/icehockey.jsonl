@@ -3388,3 +3388,7 @@
 {"id":"2026020242","sport":"icehockey","league":"NHL","date":"2026-11-04","ts":1793750400,"h":{"n":"Penguins","s":"PEN"},"a":{"n":"Golden Knights","s":"GK"},"hs":2,"as":3,"x":{"venue":"PPG Paints Arena"}}
 {"id":"2026020243","sport":"icehockey","league":"NHL","date":"2026-11-04","ts":1793750400,"h":{"n":"Capitals","s":"CAP"},"a":{"n":"Stars","s":"STA"},"hs":5,"as":6,"x":{"venue":"Capital One Arena"}}
 {"id":"2026020244","sport":"icehockey","league":"NHL","date":"2026-11-04","ts":1793750400,"h":{"n":"Blue Jackets","s":"BJ"},"a":{"n":"Avalanche","s":"AVA"},"hs":7,"as":2,"x":{"venue":"Nationwide Arena"}}
+{"id":"2026020237","sport":"icehockey","league":"NHL","date":"2026-11-04","ts":1793750400,"h":{"n":"Canadiens","s":"CAN"},"a":{"n":"Jets","s":"JET"},"hs":4,"as":5,"x":{"venue":"Centre Bell"}}
+{"id":"2026020239","sport":"icehockey","league":"NHL","date":"2026-11-04","ts":1793752200,"h":{"n":"Devils","s":"DEV"},"a":{"n":"Oilers","s":"OIL"},"hs":4,"as":3,"x":{"venue":"Prudential Center"}}
+{"id":"2026020245","sport":"icehockey","league":"NHL","date":"2026-11-04","ts":1793754000,"h":{"n":"Predators","s":"PRE"},"a":{"n":"Hurricanes","s":"HUR"},"hs":4,"as":1,"x":{"venue":"Bridgestone Arena"}}
+{"id":"2026020246","sport":"icehockey","league":"NHL","date":"2026-11-04","ts":1793757600,"h":{"n":"Canucks","s":"CAN"},"a":{"n":"Ducks","s":"DUC"},"hs":4,"as":5,"x":{"venue":"Rogers Arena"}}
