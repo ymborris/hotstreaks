@@ -3405,3 +3405,5 @@
 {"id":"2026020257","sport":"icehockey","league":"NHL","date":"2026-11-06","ts":1793923200,"h":{"n":"Penguins","s":"PEN"},"a":{"n":"Bruins","s":"BRU"},"hs":2,"as":6,"x":{"venue":"PPG Paints Arena"}}
 {"id":"2026020258","sport":"icehockey","league":"NHL","date":"2026-11-06","ts":1793923200,"h":{"n":"Blue Jackets","s":"BJ"},"a":{"n":"Stars","s":"STA"},"hs":2,"as":1,"x":{"venue":"Nationwide Arena"}}
 {"id":"2026020259","sport":"icehockey","league":"NHL","date":"2026-11-06","ts":1793923200,"h":{"n":"Jets","s":"JET"},"a":{"n":"Canucks","s":"CAN"},"hs":6,"as":2,"x":{"venue":"Canada Life Centre"}}
+{"id":"2026020260","sport":"icehockey","league":"NHL","date":"2026-11-06","ts":1793926800,"h":{"n":"Oilers","s":"OIL"},"a":{"n":"Ducks","s":"DUC"},"hs":4,"as":5,"x":{"venue":"Rogers Place"}}
+{"id":"2026020261","sport":"icehockey","league":"NHL","date":"2026-11-06","ts":1793932200,"h":{"n":"Avalanche","s":"AVA"},"a":{"n":"Predators","s":"PRE"},"hs":2,"as":3,"x":{"venue":"Ball Arena"}}
