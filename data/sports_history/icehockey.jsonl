@@ -3410,3 +3410,6 @@
 {"id":"2026020262","sport":"icehockey","league":"NHL","date":"2026-11-07","ts":1794009600,"h":{"n":"Sabres","s":"SAB"},"a":{"n":"Blue Jackets","s":"BJ"},"hs":5,"as":2,"x":{"venue":"KeyBank Center"}}
 {"id":"2026020263","sport":"icehockey","league":"NHL","date":"2026-11-07","ts":1794013200,"h":{"n":"Wild","s":"WIL"},"a":{"n":"Sharks","s":"SHA"},"hs":4,"as":1,"x":{"venue":"Grand Casino Arena"}}
 {"id":"2026020264","sport":"icehockey","league":"NHL","date":"2026-11-07","ts":1794013200,"h":{"n":"Flames","s":"FLA"},"a":{"n":"Ducks","s":"DUC"},"hs":3,"as":5,"x":{"venue":"Scotiabank Saddledome"}}
+{"id":"2026020265","sport":"icehockey","league":"NHL","date":"2026-11-07","ts":1794072600,"h":{"n":"Capitals","s":"CAP"},"a":{"n":"Panthers","s":"PAN"},"hs":4,"as":3,"x":{"venue":"Capital One Arena"}}
+{"id":"2026020266","sport":"icehockey","league":"NHL","date":"2026-11-07","ts":1794074400,"h":{"n":"Predators","s":"PRE"},"a":{"n":"Blues","s":"BLU"},"hs":3,"as":1,"x":{"venue":"Bridgestone Arena"}}
+{"id":"2026020267","sport":"icehockey","league":"NHL","date":"2026-11-07","ts":1794088800,"h":{"n":"Kraken","s":"KRA"},"a":{"n":"Rangers","s":"RAN"},"hs":3,"as":4,"x":{"venue":"Climate Pledge Arena"}}
