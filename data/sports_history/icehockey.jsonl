@@ -3425,3 +3425,6 @@
 {"id":"2026020277","sport":"icehockey","league":"NHL","date":"2026-11-08","ts":1794160800,"h":{"n":"Bruins","s":"BRU"},"a":{"n":"Panthers","s":"PAN"},"hs":4,"as":1,"x":{"venue":"TD Garden"}}
 {"id":"2026020278","sport":"icehockey","league":"NHL","date":"2026-11-08","ts":1794169800,"h":{"n":"Sabres","s":"SAB"},"a":{"n":"Golden Knights","s":"GK"},"hs":1,"as":4,"x":{"venue":"KeyBank Center"}}
 {"id":"2026020280","sport":"icehockey","league":"NHL","date":"2026-11-09","ts":1794178800,"h":{"n":"Jets","s":"JET"},"a":{"n":"Lightning","s":"LIG"},"hs":4,"as":3,"x":{"venue":"Canada Life Centre"}}
+{"id":"2026020279","sport":"icehockey","league":"NHL","date":"2026-11-09","ts":1794182400,"h":{"n":"Maple Leafs","s":"ML"},"a":{"n":"Devils","s":"DEV"},"hs":0,"as":4,"x":{"venue":"Scotiabank Arena"}}
+{"id":"2026020281","sport":"icehockey","league":"NHL","date":"2026-11-09","ts":1794182400,"h":{"n":"Flames","s":"FLA"},"a":{"n":"Flyers","s":"FLY"},"hs":4,"as":3,"x":{"venue":"Scotiabank Saddledome"}}
+{"id":"2026020282","sport":"icehockey","league":"NHL","date":"2026-11-09","ts":1794186000,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Penguins","s":"PEN"},"hs":5,"as":2,"x":{"venue":"Honda Center"}}
