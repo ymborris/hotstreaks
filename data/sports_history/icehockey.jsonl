@@ -3422,3 +3422,6 @@
 {"id":"2026020274","sport":"icehockey","league":"NHL","date":"2026-11-08","ts":1794103200,"h":{"n":"Avalanche","s":"AVA"},"a":{"n":"Red Wings","s":"RW"},"hs":4,"as":0,"x":{"venue":"Ball Arena"}}
 {"id":"2026020275","sport":"icehockey","league":"NHL","date":"2026-11-08","ts":1794103200,"h":{"n":"Kings","s":"KIN"},"a":{"n":"Penguins","s":"PEN"},"hs":2,"as":5,"x":{"venue":"Crypto.com Arena"}}
 {"id":"2026020276","sport":"icehockey","league":"NHL","date":"2026-11-08","ts":1794106800,"h":{"n":"Oilers","s":"OIL"},"a":{"n":"Canucks","s":"CAN"},"hs":4,"as":2,"x":{"venue":"Rogers Place"}}
+{"id":"2026020277","sport":"icehockey","league":"NHL","date":"2026-11-08","ts":1794160800,"h":{"n":"Bruins","s":"BRU"},"a":{"n":"Panthers","s":"PAN"},"hs":4,"as":1,"x":{"venue":"TD Garden"}}
+{"id":"2026020278","sport":"icehockey","league":"NHL","date":"2026-11-08","ts":1794169800,"h":{"n":"Sabres","s":"SAB"},"a":{"n":"Golden Knights","s":"GK"},"hs":1,"as":4,"x":{"venue":"KeyBank Center"}}
+{"id":"2026020280","sport":"icehockey","league":"NHL","date":"2026-11-09","ts":1794178800,"h":{"n":"Jets","s":"JET"},"a":{"n":"Lightning","s":"LIG"},"hs":4,"as":3,"x":{"venue":"Canada Life Centre"}}
