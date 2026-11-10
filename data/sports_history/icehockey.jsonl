@@ -3429,3 +3429,5 @@
 {"id":"2026020281","sport":"icehockey","league":"NHL","date":"2026-11-09","ts":1794182400,"h":{"n":"Flames","s":"FLA"},"a":{"n":"Flyers","s":"FLY"},"hs":4,"as":3,"x":{"venue":"Scotiabank Saddledome"}}
 {"id":"2026020282","sport":"icehockey","league":"NHL","date":"2026-11-09","ts":1794186000,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Penguins","s":"PEN"},"hs":5,"as":2,"x":{"venue":"Honda Center"}}
 {"id":"2026020283","sport":"icehockey","league":"NHL","date":"2026-11-10","ts":1794272400,"h":{"n":"Oilers","s":"OIL"},"a":{"n":"Rangers","s":"RAN"},"hs":3,"as":1,"x":{"venue":"Rogers Place"}}
+{"id":"2026020284","sport":"icehockey","league":"NHL","date":"2026-11-10","ts":1794277800,"h":{"n":"Canucks","s":"CAN"},"a":{"n":"Flyers","s":"FLY"},"hs":1,"as":3,"x":{"venue":"Rogers Arena"}}
+{"id":"2026020285","sport":"icehockey","league":"NHL","date":"2026-11-10","ts":1794279600,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Islanders","s":"ISL"},"hs":3,"as":2,"x":{"venue":"SAP Center at San Jose"}}
