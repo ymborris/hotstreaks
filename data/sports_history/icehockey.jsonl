@@ -3438,3 +3438,5 @@
 {"id":"2026020289","sport":"icehockey","league":"NHL","date":"2026-11-11","ts":1794357000,"h":{"n":"Blue Jackets","s":"BJ"},"a":{"n":"Panthers","s":"PAN"},"hs":1,"as":4,"x":{"venue":"Nationwide Arena"}}
 {"id":"2026020290","sport":"icehockey","league":"NHL","date":"2026-11-11","ts":1794358800,"h":{"n":"Blues","s":"BLU"},"a":{"n":"Red Wings","s":"RW"},"hs":3,"as":2,"x":{"venue":"Enterprise Center"}}
 {"id":"2026020292","sport":"icehockey","league":"NHL","date":"2026-11-11","ts":1794366000,"h":{"n":"Kings","s":"KIN"},"a":{"n":"Predators","s":"PRE"},"hs":0,"as":3,"x":{"venue":"Crypto.com Arena"}}
+{"id":"2026020293","sport":"icehockey","league":"NHL","date":"2026-11-12","ts":1794441600,"h":{"n":"Sabres","s":"SAB"},"a":{"n":"Lightning","s":"LIG"},"hs":3,"as":8,"x":{"venue":"KeyBank Center"}}
+{"id":"2026020294","sport":"icehockey","league":"NHL","date":"2026-11-12","ts":1794443400,"h":{"n":"Flames","s":"FLA"},"a":{"n":"Rangers","s":"RAN"},"hs":1,"as":3,"x":{"venue":"Scotiabank Saddledome"}}
