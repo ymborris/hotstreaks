@@ -3471,3 +3471,8 @@
 {"id":"2026020323","sport":"icehockey","league":"NHL","date":"2026-11-15","ts":1794708000,"h":{"n":"Mammoth","s":"MAM"},"a":{"n":"Sharks","s":"SHA"},"hs":5,"as":6,"x":{"venue":"Delta Center"}}
 {"id":"2026020324","sport":"icehockey","league":"NHL","date":"2026-11-15","ts":1794711600,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Islanders","s":"ISL"},"hs":2,"as":6,"x":{"venue":"Honda Center"}}
 {"id":"2026020325","sport":"icehockey","league":"NHL","date":"2026-11-15","ts":1794711600,"h":{"n":"Kings","s":"KIN"},"a":{"n":"Flames","s":"FLA"},"hs":2,"as":3,"x":{"venue":"Crypto.com Arena"}}
+{"id":"2026020326","sport":"icehockey","league":"NHL","date":"2026-11-16","ts":1794789000,"h":{"n":"Flyers","s":"FLY"},"a":{"n":"Oilers","s":"OIL"},"hs":2,"as":5,"x":{"venue":"Xfinity Mobile Arena"}}
+{"id":"2026020327","sport":"icehockey","league":"NHL","date":"2026-11-16","ts":1794790800,"h":{"n":"Stars","s":"STA"},"a":{"n":"Panthers","s":"PAN"},"hs":2,"as":1,"x":{"venue":"American Airlines Center"}}
+{"id":"2026020328","sport":"icehockey","league":"NHL","date":"2026-11-16","ts":1794790800,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Flames","s":"FLA"},"hs":6,"as":1,"x":{"venue":"Honda Center"}}
+{"id":"2026020329","sport":"icehockey","league":"NHL","date":"2026-11-16","ts":1794794400,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Canucks","s":"CAN"},"hs":3,"as":6,"x":{"venue":"T-Mobile Arena"}}
+{"id":"2026020330","sport":"icehockey","league":"NHL","date":"2026-11-16","ts":1794794400,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Predators","s":"PRE"},"hs":4,"as":2,"x":{"venue":"SAP Center at San Jose"}}
