@@ -3477,3 +3477,4 @@
 {"id":"2026020329","sport":"icehockey","league":"NHL","date":"2026-11-16","ts":1794794400,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Canucks","s":"CAN"},"hs":3,"as":6,"x":{"venue":"T-Mobile Arena"}}
 {"id":"2026020330","sport":"icehockey","league":"NHL","date":"2026-11-16","ts":1794794400,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Predators","s":"PRE"},"hs":4,"as":2,"x":{"venue":"SAP Center at San Jose"}}
 {"id":"2026020331","sport":"icehockey","league":"NHL","date":"2026-11-17","ts":1794875400,"h":{"n":"Rangers","s":"RAN"},"a":{"n":"Canadiens","s":"CAN"},"hs":3,"as":1,"x":{"venue":"Madison Square Garden"}}
+{"id":"2026020332","sport":"icehockey","league":"NHL","date":"2026-11-17","ts":1794882600,"h":{"n":"Mammoth","s":"MAM"},"a":{"n":"Canucks","s":"CAN"},"hs":2,"as":3,"x":{"venue":"Delta Center"}}
