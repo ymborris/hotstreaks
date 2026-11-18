@@ -3478,3 +3478,12 @@
 {"id":"2026020330","sport":"icehockey","league":"NHL","date":"2026-11-16","ts":1794794400,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Predators","s":"PRE"},"hs":4,"as":2,"x":{"venue":"SAP Center at San Jose"}}
 {"id":"2026020331","sport":"icehockey","league":"NHL","date":"2026-11-17","ts":1794875400,"h":{"n":"Rangers","s":"RAN"},"a":{"n":"Canadiens","s":"CAN"},"hs":3,"as":1,"x":{"venue":"Madison Square Garden"}}
 {"id":"2026020332","sport":"icehockey","league":"NHL","date":"2026-11-17","ts":1794882600,"h":{"n":"Mammoth","s":"MAM"},"a":{"n":"Canucks","s":"CAN"},"hs":2,"as":3,"x":{"venue":"Delta Center"}}
+{"id":"2026020333","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794960000,"h":{"n":"Bruins","s":"BRU"},"a":{"n":"Kings","s":"KIN"},"hs":0,"as":3,"x":{"venue":"TD Garden"}}
+{"id":"2026020334","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794961800,"h":{"n":"Lightning","s":"LIG"},"a":{"n":"Capitals","s":"CAP"},"hs":5,"as":2,"x":{"venue":"Benchmark International Arena"}}
+{"id":"2026020335","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794960000,"h":{"n":"Panthers","s":"PAN"},"a":{"n":"Oilers","s":"OIL"},"hs":2,"as":5,"x":{"venue":"Amerant Bank Arena"}}
+{"id":"2026020336","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794960000,"h":{"n":"Islanders","s":"ISL"},"a":{"n":"Blue Jackets","s":"BJ"},"hs":5,"as":1,"x":{"venue":"UBS Arena"}}
+{"id":"2026020337","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794960000,"h":{"n":"Flyers","s":"FLY"},"a":{"n":"Sabres","s":"SAB"},"hs":4,"as":3,"x":{"venue":"Xfinity Mobile Arena"}}
+{"id":"2026020338","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794961800,"h":{"n":"Blackhawks","s":"BLA"},"a":{"n":"Maple Leafs","s":"ML"},"hs":6,"as":3,"x":{"venue":"United Center"}}
+{"id":"2026020339","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794963600,"h":{"n":"Blues","s":"BLU"},"a":{"n":"Ducks","s":"DUC"},"hs":8,"as":6,"x":{"venue":"Enterprise Center"}}
+{"id":"2026020340","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794963600,"h":{"n":"Wild","s":"WIL"},"a":{"n":"Predators","s":"PRE"},"hs":7,"as":3,"x":{"venue":"Grand Casino Arena"}}
+{"id":"2026020341","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794960000,"h":{"n":"Jets","s":"JET"},"a":{"n":"Senators","s":"SEN"},"hs":1,"as":2,"x":{"venue":"Canada Life Centre"}}
