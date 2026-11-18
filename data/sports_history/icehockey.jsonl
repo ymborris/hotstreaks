@@ -3487,3 +3487,5 @@
 {"id":"2026020339","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794963600,"h":{"n":"Blues","s":"BLU"},"a":{"n":"Ducks","s":"DUC"},"hs":8,"as":6,"x":{"venue":"Enterprise Center"}}
 {"id":"2026020340","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794963600,"h":{"n":"Wild","s":"WIL"},"a":{"n":"Predators","s":"PRE"},"hs":7,"as":3,"x":{"venue":"Grand Casino Arena"}}
 {"id":"2026020341","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794960000,"h":{"n":"Jets","s":"JET"},"a":{"n":"Senators","s":"SEN"},"hs":1,"as":2,"x":{"venue":"Canada Life Centre"}}
+{"id":"2026020342","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794970800,"h":{"n":"Golden Knights","s":"GK"},"a":{"n":"Stars","s":"STA"},"hs":3,"as":4,"x":{"venue":"T-Mobile Arena"}}
+{"id":"2026020343","sport":"icehockey","league":"NHL","date":"2026-11-18","ts":1794970800,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Flames","s":"FLA"},"hs":2,"as":5,"x":{"venue":"SAP Center at San Jose"}}
