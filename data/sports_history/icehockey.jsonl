@@ -3530,3 +3530,4 @@
 {"id":"2026020382","sport":"icehockey","league":"NHL","date":"2026-11-24","ts":1795480200,"h":{"n":"Jets","s":"JET"},"a":{"n":"Mammoth","s":"MAM"},"hs":4,"as":2,"x":{"venue":"Canada Life Centre"}}
 {"id":"2026020383","sport":"icehockey","league":"NHL","date":"2026-11-24","ts":1795488000,"h":{"n":"Kraken","s":"KRA"},"a":{"n":"Ducks","s":"DUC"},"hs":3,"as":2,"x":{"venue":"Climate Pledge Arena"}}
 {"id":"2026020384","sport":"icehockey","league":"NHL","date":"2026-11-24","ts":1795489200,"h":{"n":"Sharks","s":"SHA"},"a":{"n":"Wild","s":"WIL"},"hs":2,"as":5,"x":{"venue":"SAP Center at San Jose"}}
+{"id":"2026020385","sport":"icehockey","league":"NHL","date":"2026-11-25","ts":1795568400,"h":{"n":"Oilers","s":"OIL"},"a":{"n":"Golden Knights","s":"GK"},"hs":3,"as":5,"x":{"venue":"Rogers Place"}}
