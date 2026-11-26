@@ -3542,3 +3542,6 @@
 {"id":"2026020394","sport":"icehockey","league":"NHL","date":"2026-11-26","ts":1795653000,"h":{"n":"Red Wings","s":"RW"},"a":{"n":"Canucks","s":"CAN"},"hs":5,"as":1,"x":{"venue":"Little Caesars Arena"}}
 {"id":"2026020395","sport":"icehockey","league":"NHL","date":"2026-11-26","ts":1795654800,"h":{"n":"Stars","s":"STA"},"a":{"n":"Predators","s":"PRE"},"hs":1,"as":3,"x":{"venue":"American Airlines Center"}}
 {"id":"2026020396","sport":"icehockey","league":"NHL","date":"2026-11-26","ts":1795654800,"h":{"n":"Wild","s":"WIL"},"a":{"n":"Mammoth","s":"MAM"},"hs":3,"as":4,"x":{"venue":"Grand Casino Arena"}}
+{"id":"2026020397","sport":"icehockey","league":"NHL","date":"2026-11-26","ts":1795660200,"h":{"n":"Avalanche","s":"AVA"},"a":{"n":"Canadiens","s":"CAN"},"hs":6,"as":0,"x":{"venue":"Ball Arena"}}
+{"id":"2026020398","sport":"icehockey","league":"NHL","date":"2026-11-26","ts":1795662000,"h":{"n":"Ducks","s":"DUC"},"a":{"n":"Sharks","s":"SHA"},"hs":7,"as":0,"x":{"venue":"Honda Center"}}
+{"id":"2026020399","sport":"icehockey","league":"NHL","date":"2026-11-26","ts":1795660800,"h":{"n":"Kraken","s":"KRA"},"a":{"n":"Blackhawks","s":"BLA"},"hs":1,"as":3,"x":{"venue":"Climate Pledge Arena"}}
